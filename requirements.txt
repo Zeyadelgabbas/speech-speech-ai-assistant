@@ -1,0 +1,43 @@
+# Core dependencies
+python-dotenv>=1.0.0
+
+# Audio processing
+sounddevice>=0.4.6
+numpy>=1.22.5,<2.0.0
+scipy>=1.10.0
+webrtcvad-wheels>=2.0.10  # Pre-built version
+
+# Speech-to-Text (faster-whisper) - pinned to compatible version
+faster-whisper==1.0.3
+
+# PyAV - compatible version that builds with Python 3.10
+av>=12.0.0
+
+# PyTorch - needed for TTS (install separately first)
+torch>=2.0.0
+torchaudio>=2.0.0
+
+# Text-to-Speech - Skip for now, install via alternative method
+piper-tts
+# LLM and Embeddings (OpenAI)
+openai>=1.10.0
+
+# Vector Database
+chromadb==0.4.24
+
+# PDF processing
+PyPDF2>=3.0.1
+pypdf>=3.17.0
+
+# Web search
+requests>=2.31.0
+
+# Google APIs (Gmail, Calendar)
+google-auth>=2.23.0
+google-auth-oauthlib>=1.1.0
+google-auth-httplib2>=0.1.1
+google-api-python-client>=2.108.0
+
+# Testing
+pytest>=7.4.3
+pytest-asyncio>=0.21.1

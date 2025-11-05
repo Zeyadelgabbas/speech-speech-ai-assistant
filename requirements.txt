@@ -9,6 +9,7 @@ webrtcvad-wheels>=2.0.10  # Pre-built version
 
 # Speech-to-Text (faster-whisper) - pinned to compatible version
 faster-whisper==1.0.3
+soundfile
 
 # PyAV - compatible version that builds with Python 3.10
 av>=12.0.0

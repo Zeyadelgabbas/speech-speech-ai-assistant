@@ -163,6 +163,8 @@ Assets/
 .Assets
 asset
 video_test.mp4
+./voices
+voices/
 
 .wav
 .mp4

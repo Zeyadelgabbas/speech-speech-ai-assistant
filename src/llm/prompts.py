@@ -14,50 +14,23 @@ def get_system_prompt(
     
     Args:
         user_summary: User profile/preferences loaded from user_summary.txt
-            Example: "User prefers concise responses. Interested in AI and technology."
         include_tools: Whether to include tool usage instructions
-    
     Returns:
         Complete system prompt string
     
-    Why system prompts matter:
-    - Define assistant personality (friendly, professional, humorous)
-    - Set behavioral rules (be concise, ask clarifications, etc.)
-    - Provide context (user preferences, current date, capabilities)
-    - Instruct tool usage (when to search web, when to use RAG)
-    
-    System prompt is the FIRST message in every conversation.
-    It's like the assistant's "instruction manual."
     """
-    
     # Current date/time for context
     current_date = datetime.now().strftime("%A, %B %d, %Y")
     current_time = datetime.now().strftime("%I:%M %p")
     
     # Base personality and role
-    prompt = f"""You are a helpful, friendly voice assistant. Today is {current_date} at {current_time}.
+    prompt = """You are a helpful, friendly voice assistant. Today is {current_date}.
 
 ## Your Personality
 - Be conversational and natural (this is a voice conversation, not text chat)
-- Keep responses concise (1-3 sentences for simple queries)
+- Keep responses concise (short responses if query is simple)
 - Be proactive: offer relevant suggestions when appropriate
 - Use a warm, professional tone
-- Avoid overly formal language (say "I'll help you" not "I shall assist you")
-
-## Response Guidelines
-- For voice responses, keep sentences short and clear
-- Avoid bullet points or lists unless specifically requested
-- Don't use markdown formatting (bold, italics, code blocks)
-- Spell out numbers under 10 (say "three" not "3")
-- For larger numbers, use digits ("150" not "one hundred fifty")
-- Use natural speech patterns ("I'll check that" not "I will check that")
-
-## Important Rules
-- If you don't know something current or time-sensitive, use the web_search tool
-- If user asks about something user uploaded or mentioned before, use rag_query tool or if user mentioned a certain document or file
-- Be honest about limitations (say "I don't have access to that" if true)
-- Never make up information - use tools or acknowledge you don't know
-- If a query is ambiguous, ask a brief clarifying question
 """
     
     # Add user context if available
@@ -76,40 +49,15 @@ Use this context to personalize responses, but don't reference it explicitly unl
 You have access to several tools. Use them proactively when needed:
 
 **web_search**: For current events, news, recent information, facts you don't know
-- Example: "What's the weather?" → use web_search
-- Example: "Give me a list of near electricians near california" : use web_search
-- Example: "Latest news on AI" → use web_search
-- Don't use for: Historical facts, definitions, common knowledge
 
 **rag_query**: Search user's uploaded documents and saved information
-- Example: "What did I upload about project X or what is in file y ?" → use rag_query
-- Example: "Remind me what I said about..." → use rag_query
-- This contains information the user explicitly saved or uploaded
 
 **gmail_draft**: Create email drafts (does NOT send, only creates draft)
-- Example: "Draft an email to John" → use gmail_draft
-- Always confirm recipient and subject before creating draft
-- Be clear: "I've created a draft, you can review and send it from Gmail"
 
-**calendar_read**: Check user's calendar for events
-- Example: "What's on my calendar?" → use calendar_read
-- Example: "Do I have meetings tomorrow?" → use calendar_read
-- Can only READ calendar (cannot create/modify events)
+**file_writter**: saves and exports (summaries , chats , search results , etc) to file
 
-**Tool Usage Tips:**
-- Use tools proactively (don't ask permission for obvious cases)
-- You can use multiple tools in sequence if needed
-- If a tool fails, acknowledge it gracefully and offer alternatives
+ Note: If a tool fails, acknowledge it gracefully and offer alternatives
 """
-    
-    prompt += """
-## Special Commands (do NOT respond to these, they're handled separately)
-- "write info [content]" - User is saving information (system handles this)
-- "update my summary" - User wants to update their profile (system handles this)
-
-If user says these commands, you won't see them - the system intercepts them.
-"""
-    
     return prompt.strip()
 
 
@@ -151,13 +99,6 @@ When drafting emails:
 - Keep emails professional but friendly
 - Use proper email structure (greeting, body, closing)
 - Confirm with user before creating draft
-""",
-        
-        "calendar_read": """
-When checking calendar:
-- Specify date range if user mentions it
-- Default to "today" if no date specified
-- Summarize events clearly with times
 """
     }
     
@@ -234,7 +175,8 @@ def get_summarization_prompt(content: str, max_words: int = 100) -> str:
     
     return f"""Summarize the following content in {max_words} words or less.
 Focus on key points, preferences, and important facts.
-Write in concise, clear language.
+Write in concise, clear language. this summary should be used as user's preference for interacting with llm
+so make it user oriented and conclusive.
 
 Content:
 {content}
@@ -242,7 +184,7 @@ Content:
 Summary:"""
 
 
-def get_conversation_starter_prompts() -> list:
+def get_conversation_starter_prompts() -> list[str]:
     """
     Get list of conversation starters the assistant can use.
     
@@ -263,7 +205,7 @@ def get_conversation_starter_prompts() -> list:
     ]
 
 
-def format_rag_context(chunks: list, max_chunks: int = 5) -> str:
+def format_rag_context(chunks: list) -> str:
     """
     Format RAG retrieval results for inclusion in LLM context.
     
@@ -275,16 +217,10 @@ def format_rag_context(chunks: list, max_chunks: int = 5) -> str:
     Returns:
         Formatted string to add to messages
     
-    Why this exists:
-    When rag_query tool returns results, we need to format them
-    in a way the LLM can understand and use effectively.
     """
     
     if not chunks:
         return "No relevant information found in user's documents."
-    
-    # Limit number of chunks to avoid context bloat
-    chunks = chunks[:max_chunks]
     
     formatted = "Here's relevant information from the user's documents:\n\n"
     
@@ -312,9 +248,6 @@ def format_web_search_results(results: list, max_results: int = 3) -> str:
     Returns:
         Formatted string to add to messages
     
-    Why this exists:
-    When web_search tool returns results, format them clearly
-    so the LLM can synthesize a natural response.
     """
     
     if not results:
@@ -336,49 +269,6 @@ def format_web_search_results(results: list, max_results: int = 3) -> str:
         formatted += "\n"
     
     formatted += "Synthesize this information into a natural, concise response."
-    
-    return formatted
-
-
-def format_calendar_events(events: list) -> str:
-    """
-    Format calendar events for inclusion in LLM context.
-    
-    Args:
-        events: List of calendar events
-            Format: [{"summary": "...", "start": "...", "end": "..."}, ...]
-    
-    Returns:
-        Formatted string to add to messages
-    
-    Why this exists:
-    When calendar_read tool returns events, format them
-    so the LLM can present them naturally in voice format.
-    """
-    
-    if not events:
-        return "No events found on the calendar for the requested time period."
-    
-    formatted = "Here are the calendar events:\n\n"
-    
-    for i, event in enumerate(events, 1):
-        summary = event.get("summary", "Untitled event")
-        start = event.get("start", "Unknown time")
-        end = event.get("end", "")
-        location = event.get("location", "")
-        
-        formatted += f"{i}. {summary}\n"
-        formatted += f"   Time: {start}"
-        if end:
-            formatted += f" to {end}"
-        formatted += "\n"
-        
-        if location:
-            formatted += f"   Location: {location}\n"
-        
-        formatted += "\n"
-    
-    formatted += "Present these events in a natural, conversational way."
     
     return formatted
 

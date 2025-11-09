@@ -86,11 +86,7 @@ class OpenAIClient:
                 ]
             tools: Available tools (functions LLM can call)
                 Format: OpenAI function calling schema (see _format_tools())
-                Example: [{"type": "function", "function": {...}}]
             tool_choice: How LLM should use tools
-                "auto" = LLM decides when to call tools [RECOMMENDED]
-                "none" = Never call tools (just respond with text)
-                {"type": "function", "function": {"name": "web_search"}} = Force specific tool
         
         Returns:
             Dictionary with:
@@ -98,34 +94,7 @@ class OpenAIClient:
                 - content: Text response (may be None if tool_calls exist)
                 - tool_calls: List of tool calls LLM wants to execute (or None)
                 - finish_reason: "stop" (complete) or "tool_calls" (needs tool execution)
-        
-        Message roles explained:
-        - system: Instructions for the LLM (personality, rules, context)
-        - user: What the user said (input)
-        - assistant: What the LLM responded (output)
-        - tool: Results from tool execution (special role for function calling)
-        
-        Example usage:
-            messages = [
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": "Search for AI news"}
-            ]
-            
-            response = client.chat(messages, tools=available_tools)
-            
-            if response["tool_calls"]:
-                # LLM wants to call a tool
-                for tool_call in response["tool_calls"]:
-                    # Execute tool, get result
-                    result = execute_tool(tool_call)
-                    # Add tool result to messages
-                    messages.append({
-                        "role": "tool",
-                        "tool_call_id": tool_call["id"],
-                        "content": result
-                    })
-                # Call LLM again with tool results
-                final_response = client.chat(messages, tools=available_tools)
+ 
         """
         if not messages:
             raise ValueError("Messages list cannot be empty")
@@ -212,14 +181,6 @@ class OpenAIClient:
         Returns:
             Final assistant response (same format as chat())
         
-      
-        Example flow:
-        User: "Search for AI news and summarize it"
-        Iteration 1:
-            LLM: tool_call(web_search, query="AI news")
-            Tool: "Article 1: ..., Article 2: ..."
-        Iteration 2:
-            LLM: "Here's a summary: ..." [DONE]
         """
         iteration = 0
         

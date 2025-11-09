@@ -55,6 +55,7 @@ class Config:
 
     # MEMORY SETTINGS
     USER_SUMMARY_FILE = DATA_DIR / "user_summary.txt"
+    USER_NOTES_FILE = DATA_DIR/ "user_notes.txt"
     SESSION_MEMORY_MAX_TOKENS = int(os.getenv("SESSION_MEMORY_MAX_TOKENS", "4000"))
 
     # APPLICATION SETTINGS

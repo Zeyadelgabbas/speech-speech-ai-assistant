@@ -22,11 +22,14 @@ torchaudio>=2.0.0
 piper-tts
 # LLM and Embeddings (OpenAI)
 openai>=1.10.0
+tiktoken
 
 # Vector Database
 chromadb==0.4.24
 
 # PDF processing
+langchain-text-splitters==1.0.0
+langchain-community==0.4.1
 PyPDF2>=3.0.1
 pypdf>=3.17.0
 

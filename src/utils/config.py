@@ -62,6 +62,8 @@ class Config:
     APP_NAME = os.getenv("APP_NAME", "VoiceAssistant")
     DEBUG_MODE = os.getenv("DEBUG_MODE", "false").lower() == "true"
     DEMO_MODE = os.getenv("DEMO_MODE", "false").lower() == "true"
+    INCLUDE_SEARCH_SERPAPI = os.getenv("INCLUDE_SEARCH_SERPAPI","")
+    INCLUDE_GMAIL_DRAFT = os.getenv("INCLUDE_GMAIL_DRAFT","")
 
     # VALIDATION
     @staticmethod

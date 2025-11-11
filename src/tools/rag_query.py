@@ -55,7 +55,7 @@ class RAGQueryTool(BaseTool):
                 },
                 "top_k": {
                     "type": "integer",
-                    "description": "Number of relevant chunks to retrieve"
+                    "description": "Number of relevant chunks to retrieve",
                     "default": self.top_k,
                     "minimum": 1,
                     "maximum": 10
@@ -127,7 +127,7 @@ Let the user know their document database is empty."""
                 return self._format_no_results(query, filter_source)
             
             # Format results for LLM
-            formatted = format_rag_context(results, max_chunks=top_k)
+            formatted = format_rag_context(results)
             
             logger.info(f"RAG query completed: {len(results)} results returned")
             return formatted

@@ -4,8 +4,11 @@ from typing import List, Dict, Optional
 import hashlib
 from pathlib import Path
 from ..utils import get_logger , config
+import logging
 
-logging = get_logger(__name__)
+logger = get_logger(__name__)
+
+logging.getLogger("chromadb.telemetry.product.posthog").setLevel(logging.CRITICAL)
 
 
 class VectorDB:
@@ -60,7 +63,7 @@ class VectorDB:
             metadata={"description": "User documents and voice inserts"}
         )
         
-        logging.info(
+        logger.info(
             f"VectorDB initialized: collection={collection_name}, "
             f"path={self.persist_directory}, docs={self.collection.count()}"
         )
@@ -89,12 +92,12 @@ class VectorDB:
             
             embedding = response.data[0].embedding
             
-            logging.debug(f"Generated embedding: {len(text)} chars → {len(embedding)} dims")
+            logger.debug(f"Generated embedding: {len(text)} chars → {len(embedding)} dims")
             
             return embedding
         
         except Exception as e:
-            logging.error(f"Failed to generate embedding: {e}")
+            logger.error(f"Failed to generate embedding: {e}")
             raise
     
     def add_document(
@@ -136,7 +139,7 @@ class VectorDB:
             metadatas=[metadata]
         )
         
-        logging.info(f"Added document: id={doc_id}, length={len(text)} chars")
+        logger.info(f"Added document: id={doc_id}, length={len(text)} chars")
         
         return doc_id
     
@@ -183,7 +186,7 @@ class VectorDB:
             source = current_metadata.get("source","")
 
             if source and source in all_sources:
-                logging.info(f"skipping duplicate source: {source} ")
+                logger.info(f"skipping duplicate source: {source} ")
                 continue
 
             new_texts.append(texts[i])
@@ -191,7 +194,7 @@ class VectorDB:
             new_docs_ids.append(doc_ids[i]) 
 
         if not new_texts:
-            logging.info(f"All documents were duplicates , skipping ")
+            logger.info(f"All documents were duplicates , skipping ")
             return []
         
         # Generate embeddings (batch)
@@ -205,7 +208,7 @@ class VectorDB:
             metadatas=new_metadatas,
         )
         
-        logging.info(f"Added {len(texts)} documents in batch")
+        logger.info(f"Added {len(texts)} documents in batch")
         
         return new_docs_ids
     
@@ -237,12 +240,12 @@ class VectorDB:
             
             embeddings = [item.embedding for item in response.data]
             
-            logging.debug(f"Generated {len(embeddings)} embeddings in batch")
+            logger.debug(f"Generated {len(embeddings)} embeddings in batch")
             
             return embeddings
         
         except Exception as e:
-            logging.error(f"Failed to generate batch embeddings: {e}")
+            logger.error(f"Failed to generate batch embeddings: {e}")
             raise
     
     def query(
@@ -272,7 +275,7 @@ class VectorDB:
             ]
         """
         if not query_text.strip():
-            logging.warning("Empty query provided")
+            logger.warning("Empty query provided")
             return []
         
         # Generate embedding for query
@@ -296,7 +299,7 @@ class VectorDB:
                     "metadata": results['metadatas'][0][i],
                 })
         
-        logging.info(f"Query '{query_text[:50]}...': found {len(formatted_results)} results")
+        logger.info(f"Query '{query_text[:50]}...': found {len(formatted_results)} results")
         
         return formatted_results
     
@@ -315,11 +318,11 @@ class VectorDB:
         """
         try:
             self.collection.delete(ids=[doc_id])
-            logging.info(f"Deleted document: {doc_id}")
+            logger.info(f"Deleted document: {doc_id}")
             return True
         
         except Exception as e:
-            logging.error(f"Failed to delete document: {e}")
+            logger.error(f"Failed to delete document: {e}")
             return False
     
     
@@ -356,7 +359,7 @@ class VectorDB:
             return sorted(list(sources))
         
         except Exception as e:
-            logging.error(f"Failed to list sources: {e}")
+            logger.error(f"Failed to list sources: {e}")
             return []
     
     def _generate_doc_id(self, text: str, metadata: Optional[Dict] = None) -> str:
@@ -396,22 +399,22 @@ class VectorDB:
                 metadata={"description": "User documents and voice inserts"}
             )
             
-            logging.warning("Collection cleared (all documents deleted)")
+            logger.warning("Collection cleared (all documents deleted)")
             print("⚠️  All documents deleted from vector database")
         
         except Exception as e:
-            logging.error(f"Failed to clear collection: {e}")
+            logger.error(f"Failed to clear collection: {e}")
             raise
 
     def delete_by_metadata(self,metadata: dict):
 
         try:
             self.collection.delete(where = metadata)
-            logging.info(f"Deleted by metadata : {metadata}")
+            logger.info(f"Deleted by metadata : {metadata}")
             return 1 
         
         except Exception as e : 
-            logging.error(f"failed to delete by metadata : {e}")
+            logger.error(f"failed to delete by metadata : {e}")
 
 if __name__ == "__main__":
     import tempfile

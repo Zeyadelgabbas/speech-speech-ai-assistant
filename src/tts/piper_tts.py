@@ -96,7 +96,7 @@ class PiperTTS:
         logger.info(f"✅ Voice downloaded successfully to {self.voices_dir}")
 
     # ---------------------------------------------------------
-    def synthesize(self, text: str, speed: float = 1.0) -> np.ndarray:
+    def synthesize(self, text: str) -> np.ndarray:
         """Synthesize text to numpy audio array."""
         if not text.strip():
             return np.array([], dtype=np.float32)

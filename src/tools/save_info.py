@@ -54,8 +54,8 @@ Add Below any information you want AI to remember (Don't delete this line and do
     
     @property
     def description(self):
-        return """ Save quick personal notes , reminders to user's notes file . 
-        Use for : Notes , meetings , reminders , appointments. 
+        return """ Save and retreive quick personal notes , reminders to user's notes file . 
+        Use for reading or saving : Notes , meetings , reminders , appointments , calender . 
         Not for : exporting content (use file_writer tool).
         """
 

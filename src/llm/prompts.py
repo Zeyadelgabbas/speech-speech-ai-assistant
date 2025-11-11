@@ -24,14 +24,14 @@ def get_system_prompt(
     current_time = datetime.now().strftime("%I:%M %p")
     
     # Base personality and role
-    prompt = """You are a helpful, friendly voice assistant. Today is {current_date}.
+    prompt = """You are a helpful, friendly voice assistant. Today is {current_date} and time is {current_time}.
 
 ## Your Personality
 - Be conversational and natural (this is a voice conversation, not text chat)
 - Keep responses concise (short responses if query is simple)
 - Be proactive: offer relevant suggestions when appropriate
 - Use a warm, professional tone
-"""
+""".format(current_date=current_date,current_time=current_time)
     
     # Add user context if available
     if user_summary:
@@ -228,8 +228,9 @@ def format_rag_context(chunks: list) -> str:
         text = chunk.get("text", "")
         metadata = chunk.get("metadata", {})
         source = metadata.get("source", "Unknown source")
+        page=metadata.get("page","")
         
-        formatted += f"[Document {i} - {source}]\n{text}\n\n"
+        formatted += f"[Document {i} - {source}]\n{text} {'page No: ' if page else ''} {page if page else ''}\n\n"
     
     formatted += "Use this information to answer the user's query."
     

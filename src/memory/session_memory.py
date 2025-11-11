@@ -1,6 +1,6 @@
 from typing import List, Dict, Optional
 from datetime import datetime
-from ..utils import get_logger , config , count_tokens
+from ..utils import get_logger , config 
 
 logger = get_logger(__name__)
 
@@ -34,7 +34,7 @@ class SessionMemory:
         """
         self.messages: List[Dict[str, any]] = []
         self.max_messages = max_messages
-        self.session_start = datetime.now().strftime("%Y-%m-%d,%H:%M:%S")
+        self.session_start = datetime.now()
         self.session_id = None  # Will be set when saved to database
         
         logger.info(f"SessionMemory initialized: max_messages={max_messages}")
@@ -195,7 +195,7 @@ class SessionMemory:
         
         logger.info(f"Truncated to {len(self.messages)} messages")
     
-    def truncate_by_tokens(self, max_tokens: int,count_tokens :callable = count_tokens):
+    def truncate_by_tokens(self, max_tokens: int,count_tokens_func :callable = None):
         """
         Truncate messages to fit within token budget.
         
@@ -213,12 +213,15 @@ class SessionMemory:
         2. If over budget, remove oldest messages (keep system + recent)
         3. Continue until under budget
         """
+        if count_tokens_func is None:
+            from ..utils import count_tokens
+            count_tokens_func = count_tokens
         # Count total tokens
         total_tokens = 0
         for msg in self.messages:
             content = msg.get("content", "")
             if content:
-                total_tokens += count_tokens(content)
+                total_tokens += count_tokens_func(content)
         
         # If under budget, no truncation needed
         if total_tokens <= max_tokens:
@@ -236,7 +239,7 @@ class SessionMemory:
         while total_tokens > max_tokens and len(other_messages) > 1:
             # Remove oldest message
             removed = other_messages.pop(0)
-            removed_tokens = count_tokens(removed.get("content", ""))
+            removed_tokens = count_tokens_func(removed.get("content", ""))
             total_tokens -= removed_tokens
             logger.debug(f"Removed message ({removed_tokens} tokens)")
         

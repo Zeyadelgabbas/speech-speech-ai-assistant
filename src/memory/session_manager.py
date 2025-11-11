@@ -314,16 +314,6 @@ class SessionManager:
             ]
         
         Ordered by: most recent first (last_updated DESC)
-        
-        Why not include full messages?
-        - Faster queries (no JSON parsing)
-        - Less memory usage
-        - User just wants to see what sessions exist
-        
-        Usage:
-            sessions = session_manager.list_sessions(limit=10)
-            for s in sessions:
-                print(f"[{s['session_id']}] {s['name']} - {s['message_count']} messages")
         """
         try:
             conn = sqlite3.connect(self.db_path)

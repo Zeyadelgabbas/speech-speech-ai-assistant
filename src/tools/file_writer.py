@@ -100,7 +100,7 @@ if user didn't provide a filename you provide clear short name according to the 
             file_path = self.output_dir / filename
             
             # Add time stamp 
-            formatted_content = self._format_content(content, format)
+            formatted_content = self._format_content(content)
             
             # Write to file
             

@@ -5,7 +5,7 @@ import hashlib
 from pathlib import Path
 from ..utils import get_logger , config
 
-logger = get_logger(__name__)
+logging = get_logger(__name__)
 
 
 class VectorDB:
@@ -14,28 +14,7 @@ class VectorDB:
     
     Stores:
     - Uploaded PDF/text documents (chunked)
-    - "write info" voice insertions
     - Any text the user wants to remember and search later
-    
-    How it works:
-    1. Text is split into chunks (~500 tokens each)
-    2. Each chunk is embedded using OpenAI embeddings API
-    3. Embeddings are stored in ChromaDB (local vector store)
-    4. When user queries, we embed the query and find similar chunks
-    5. Return top-K most relevant chunks to LLM for context
-    
-    Why OpenAI embeddings?
-    - High quality (better than sentence-transformers)
-    - Small model (text-embedding-3-small = $0.00002 per 1K tokens)
-    - Fast API (~100ms per request)
-    - Consistent with LLM (GPT-4 understands its own embeddings well)
-    
-    Why ChromaDB?
-    - Local storage (no cloud dependencies)
-    - Simple Python API
-    - Persistent (survives restarts)
-    - Fast queries (<100ms for 10K docs)
-    - Auto-handles vector indexing
     """
     
     def __init__(
@@ -69,8 +48,9 @@ class VectorDB:
         self.client = chromadb.PersistentClient(
             path=str(self.persist_directory),
             settings=Settings(
-                anonymized_telemetry=False  # Disable telemetry
-            )
+                anonymized_telemetry=False,  # Disable telemetry
+                allow_reset = True
+            )   
         )
         
         # Get or create collection
@@ -80,7 +60,7 @@ class VectorDB:
             metadata={"description": "User documents and voice inserts"}
         )
         
-        logger.info(
+        logging.info(
             f"VectorDB initialized: collection={collection_name}, "
             f"path={self.persist_directory}, docs={self.collection.count()}"
         )
@@ -109,12 +89,12 @@ class VectorDB:
             
             embedding = response.data[0].embedding
             
-            logger.debug(f"Generated embedding: {len(text)} chars → {len(embedding)} dims")
+            logging.debug(f"Generated embedding: {len(text)} chars → {len(embedding)} dims")
             
             return embedding
         
         except Exception as e:
-            logger.error(f"Failed to generate embedding: {e}")
+            logging.error(f"Failed to generate embedding: {e}")
             raise
     
     def add_document(
@@ -129,24 +109,11 @@ class VectorDB:
         Args:
             text: Document text
             metadata: Additional info about document
-                Example: {"source": "notes.txt", "date": "2025-11-05", "type": "write_info"}
             doc_id: Unique identifier (auto-generated if None)
                 Important: Same doc_id = update existing doc
         
         Returns:
             Document ID
-        
-        Why metadata matters?
-        - Filter results by source: "Show docs from notes.txt"
-        - Filter by date: "Show recent inserts"
-        - Filter by type: "Show only PDFs" vs "Show only voice inserts"
-        
-        Usage:
-            vector_db.add_document(
-                text="Project deadline is Nov 15",
-                metadata={"source": "meeting_notes.pdf", "page": 3},
-                doc_id="meeting_notes_page3_chunk1"
-            )
         """
         # Generate doc_id if not provided (hash of content)
         if not doc_id:
@@ -169,7 +136,7 @@ class VectorDB:
             metadatas=[metadata]
         )
         
-        logger.info(f"Added document: id={doc_id}, length={len(text)} chars")
+        logging.info(f"Added document: id={doc_id}, length={len(text)} chars")
         
         return doc_id
     
@@ -189,15 +156,7 @@ class VectorDB:
         
         Returns:
             List of document IDs
-        
-        Why batch?
-        - OpenAI embeddings API supports batch requests (up to 2048 texts)
-        - Faster: 1 API call instead of N calls
-        - Cheaper: Reduced network overhead
-        
-        Usage:
-            chunks = ["chunk 1", "chunk 2", "chunk 3"]
-            vector_db.add_documents_batch(chunks)
+    
         """
         if not texts:
             return []
@@ -212,31 +171,43 @@ class VectorDB:
         # Prepare metadatas
         if metadatas is None:
             metadatas = [{}] * len(texts)
-        sources = self.list_sources()
+
+        all_sources = self.list_sources()
         new_texts=[]
         new_metadatas = []
+        new_docs_ids = []
+
         for i in range(len(texts)):
-            if metadatas['source']:
-                if metadatas['source'] in sources:
-                    continue
+
+            current_metadata = metadatas[i] if i < len(metadatas) else {}
+            source = current_metadata.get("source","")
+
+            if source and source in all_sources:
+                logging.info(f"skipping duplicate source: {source} ")
+                continue
+
             new_texts.append(texts[i])
-            new_metadatas.append(metadatas[i])
+            new_metadatas.append(current_metadata)
+            new_docs_ids.append(doc_ids[i]) 
 
-
+        if not new_texts:
+            logging.info(f"All documents were duplicates , skipping ")
+            return []
+        
         # Generate embeddings (batch)
         embeddings = self._get_openai_embeddings_batch(new_texts)
         
         # Add to collection
         self.collection.add(
-            ids=doc_ids,
+            ids=new_docs_ids,
             embeddings=embeddings,
             documents=new_texts,
             metadatas=new_metadatas,
         )
         
-        logger.info(f"Added {len(texts)} documents in batch")
+        logging.info(f"Added {len(texts)} documents in batch")
         
-        return doc_ids
+        return new_docs_ids
     
     def _get_openai_embeddings_batch(self, texts: List[str]) -> List[List[float]]:
         """
@@ -266,12 +237,12 @@ class VectorDB:
             
             embeddings = [item.embedding for item in response.data]
             
-            logger.debug(f"Generated {len(embeddings)} embeddings in batch")
+            logging.debug(f"Generated {len(embeddings)} embeddings in batch")
             
             return embeddings
         
         except Exception as e:
-            logger.error(f"Failed to generate batch embeddings: {e}")
+            logging.error(f"Failed to generate batch embeddings: {e}")
             raise
     
     def query(
@@ -301,7 +272,7 @@ class VectorDB:
             ]
         """
         if not query_text.strip():
-            logger.warning("Empty query provided")
+            logging.warning("Empty query provided")
             return []
         
         # Generate embedding for query
@@ -325,7 +296,7 @@ class VectorDB:
                     "metadata": results['metadatas'][0][i],
                 })
         
-        logger.info(f"Query '{query_text[:50]}...': found {len(formatted_results)} results")
+        logging.info(f"Query '{query_text[:50]}...': found {len(formatted_results)} results")
         
         return formatted_results
     
@@ -344,11 +315,11 @@ class VectorDB:
         """
         try:
             self.collection.delete(ids=[doc_id])
-            logger.info(f"Deleted document: {doc_id}")
+            logging.info(f"Deleted document: {doc_id}")
             return True
         
         except Exception as e:
-            logger.error(f"Failed to delete document: {e}")
+            logging.error(f"Failed to delete document: {e}")
             return False
     
     
@@ -385,7 +356,7 @@ class VectorDB:
             return sorted(list(sources))
         
         except Exception as e:
-            logger.error(f"Failed to list sources: {e}")
+            logging.error(f"Failed to list sources: {e}")
             return []
     
     def _generate_doc_id(self, text: str, metadata: Optional[Dict] = None) -> str:
@@ -425,16 +396,27 @@ class VectorDB:
                 metadata={"description": "User documents and voice inserts"}
             )
             
-            logger.warning("Collection cleared (all documents deleted)")
+            logging.warning("Collection cleared (all documents deleted)")
             print("⚠️  All documents deleted from vector database")
         
         except Exception as e:
-            logger.error(f"Failed to clear collection: {e}")
+            logging.error(f"Failed to clear collection: {e}")
             raise
+
+    def delete_by_metadata(self,metadata: dict):
+
+        try:
+            self.collection.delete(where = metadata)
+            logging.info(f"Deleted by metadata : {metadata}")
+            return 1 
+        
+        except Exception as e : 
+            logging.error(f"failed to delete by metadata : {e}")
 
 if __name__ == "__main__":
     import tempfile
     import shutil
+    import time
     
     print("=" * 70)
     print("VECTOR DATABASE TEST")
@@ -512,7 +494,7 @@ if __name__ == "__main__":
         for i, r in enumerate(results, 1):
             print(f"   {i}. [{r['metadata'].get('source', 'unknown')}]")
             print(f"      {r['text'][:80]}...")
-            print(f"      Distance: {r['distance']:.4f}\n")
+
         
         # Test 5: Query with metadata filter
         print("\n📝 Test 5: Query with metadata filter")
@@ -562,5 +544,25 @@ if __name__ == "__main__":
     
     finally:
         # Cleanup
-        shutil.rmtree(temp_dir)
-        print(f"\n🧹 Cleaned up test directory: {temp_dir}")
+        try:
+            vector_db.clear_collection()
+            print("collection deleted")
+
+            # Close the Chroma DB client if possible
+            if hasattr(vector_db, "client") and vector_db.client:
+                if hasattr(vector_db.client, "persist"):
+                    vector_db.client.persist()
+                if hasattr(vector_db.client, "reset"):
+                    vector_db.client.reset()  # Requires allow_reset=True
+                elif hasattr(vector_db.client, "close"):
+                    vector_db.client.close()
+        except Exception as e:
+            print(f"⚠️ Could not fully close Chroma client: {e}")
+
+        try:
+            time.sleep(15)
+            shutil.rmtree(temp_dir)
+            print(f"\n🧹 Cleaned up test directory: {temp_dir}")
+
+        except Exception as e:
+            print(e)

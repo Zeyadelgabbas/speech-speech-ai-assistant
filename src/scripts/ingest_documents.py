@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 import argparse
 import tiktoken
-from typing import List, Dict
+from typing import List, Dict ,Any
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 # Add project root to path
@@ -16,7 +16,9 @@ logger = get_logger(__name__)
 encoding = tiktoken.get_encoding('cl100k_base')
 def num_tokens(text: str) ->int:
     return len(encoding.encode(text))
-def chunk_text(text: str, chunk_size: int = None, overlap: int = None , num_tokens:callable = num_tokens) -> List[str]:
+def chunk_text(text: str, chunk_size: int = None,
+                overlap: int = None ,
+                  num_tokens:callable = num_tokens) -> List[str]:
     """
     Split text into overlapping chunks.
     
@@ -44,7 +46,7 @@ def chunk_text(text: str, chunk_size: int = None, overlap: int = None , num_toke
     return chunks
 
 
-def extract_text_from_pdf(pdf_path: Path , num_tokens: callable = num_tokens) -> List[str,any]:
+def extract_text_from_pdf(pdf_path: Path , num_tokens: callable = num_tokens) -> List[Dict[str,Any]]:
     """
     Extract text from PDF file.
     
@@ -385,8 +387,6 @@ Supported file types: .pdf, .txt, .md
             chunks = ingest_file(
                 file_path,
                 vector_db,
-                chunk_size=args.chunk_size,
-                overlap=args.overlap
             )
             total_chunks += chunks
     

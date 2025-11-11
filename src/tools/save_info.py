@@ -175,17 +175,11 @@ Add Below any information you want AI to remember (Don't delete this line and do
             try:
                 notes = notes[-int(limit):]
             except Exception as e: 
-                return "Error : limit must be an integer or 'all' ."
+                logging.error(f"limit must be an integer  Error : {e}")
+                return "Invalid limit value must be an integer or 'all'."
 
         if is_manual:
             notes.extend(manual_content)
 
-        return """If the file doesn't contain timestamped notes or manual inserted notes
-          tell the user that no information inserted yet .
-          the following is the user's notes file content :
-
-         """ + '\n\n'.join(notes)
+        return "User's notes file content : \n\n" + '\n\n'.join(notes)
         
-
-
-

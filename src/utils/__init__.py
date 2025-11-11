@@ -11,7 +11,7 @@ __all__ = [
 ]
 
 
-def count_toknes(text: str , model :str = config.OPENAI_MODEL) ->int:
+def count_tokens(text: str , model :str = config.OPENAI_MODEL) ->int:
 
     """ input : string , output: number of tokens"""
     try:

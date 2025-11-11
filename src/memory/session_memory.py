@@ -1,6 +1,6 @@
 from typing import List, Dict, Optional
 from datetime import datetime
-from ..utils import get_logger , config , count_toknes
+from ..utils import get_logger , config , count_tokens
 
 logger = get_logger(__name__)
 
@@ -195,7 +195,7 @@ class SessionMemory:
         
         logger.info(f"Truncated to {len(self.messages)} messages")
     
-    def truncate_by_tokens(self, max_tokens: int,count_tokens :callable = count_toknes):
+    def truncate_by_tokens(self, max_tokens: int,count_tokens :callable = count_tokens):
         """
         Truncate messages to fit within token budget.
         
@@ -236,7 +236,7 @@ class SessionMemory:
         while total_tokens > max_tokens and len(other_messages) > 1:
             # Remove oldest message
             removed = other_messages.pop(0)
-            removed_tokens = count_toknes(removed.get("content", ""))
+            removed_tokens = count_tokens(removed.get("content", ""))
             total_tokens -= removed_tokens
             logger.debug(f"Removed message ({removed_tokens} tokens)")
         

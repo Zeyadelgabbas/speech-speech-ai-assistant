@@ -172,7 +172,7 @@ class VoiceAssistant:
                 response_text, should_speak = self._process_with_llm(user_text)
             
             # Step 6: Display response
-            if response_text and response_text not in ["PROMPT_NAME", "PROMPT_LOAD"]:
+            if response_text:
                 print(f"\n🤖 Assistant: {response_text}")
             
             # Step 7-8: TTS and playback
@@ -306,10 +306,10 @@ class VoiceAssistant:
             (response_text, should_speak, tts_speed)
         """
         command_name = command["command"]
-        args = command["args"]
+  
         
         logger.info(f"Handling command: {command_name}")
-        #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        
         if command_name == 'save_session':
             name = input("Enter session name :   ")
             
@@ -327,7 +327,7 @@ class VoiceAssistant:
                 self.session_manager
             ),
             "delete_session": lambda: CommandHandlers.handle_delete_session(
-                self.session_manager, args["name"]
+                self.session_manager
             ),
             "clear_conversation": lambda: CommandHandlers.handle_clear_conversation(
                 self.session_memory

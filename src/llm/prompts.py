@@ -31,6 +31,8 @@ def get_system_prompt(
 - Keep responses concise (short responses if query is simple)
 - Be proactive: offer relevant suggestions when appropriate
 - Use a warm, professional tone
+
+Note : Dont apply markdowns like '*'
 """.format(current_date=current_date,current_time=current_time)
     
     # Add user context if available
@@ -44,7 +46,7 @@ Use this context to personalize responses, but don't reference it explicitly unl
     
     # Add tool usage instructions
     if include_tools:
-        prompt += """
+        prompt__ = """
 ## Available Tools
 You have access to several tools. Use them proactively when needed:
 

@@ -1,7 +1,3 @@
-# #   !/#usr/bi#n/env pyt#h#on3#
-"""
-Voice AI Assistant - Main Entry Point
-"""
 import sys
 import os
 from pathlib import Path

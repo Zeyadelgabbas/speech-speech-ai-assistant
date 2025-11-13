@@ -1,348 +1,302 @@
-# 🎤 Voice AI Assistant
+# 🎤 Speech-to-Speech AI Voice Assistant
 
-**A production-ready, multi-modal AI assistant powered by GPT-4, Whisper, and Piper TTS**
+> **An intelligent, privacy-focused voice assistant with conversational memory, tool execution, and real-time speech interaction**
 
-<div align="center">
-
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4-412991.svg)](https://openai.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-[Features](#-features) • [Quick Start](#-quick-start) • [Demo](#-demo) • [Architecture](#-architecture) • [Tech Stack](#-tech-stack)
-
-</div>
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Status](https://img.shields.io/badge/Status-Production%20Ready-success)](https://github.com/Zeyadelgabbas/speech-speech-ai-assistant)
 
 ---
 
-## 🎯 What is This?
+## 🌟 Overview
 
-A **fully functional voice-controlled AI assistant** that you can talk to naturally. It understands speech, searches the web, remembers conversations, and can help with tasks like drafting emails and managing notes.
+A production-ready voice assistant that combines **Speech-to-Text (STT)**, **Large Language Models (LLMs)**, and **Text-to-Speech (TTS)** into a seamless conversational experience. Built with local processing capabilities and intelligent function calling, it offers session-based memory, document search (RAG), web search, Gmail integration, and real-time voice activity detection.
 
-**Built for learning and showcasing modern AI integration.**
-
----
-
-## ✨ Features
-
-### 🗣️ **Natural Voice Interaction**
-- **Press-to-Speak**: Record for 5 seconds with a keypress
-- **Voice Activity Detection (VAD)**: Hands-free mode that detects when you start/stop speaking
-- **Natural TTS**: High-quality speech synthesis (adjustable speed)
-
-### 🧠 **Intelligent AI Brain**
-- **GPT-4 Integration**: Context-aware responses with function calling
-- **RAG (Retrieval-Augmented Generation)**: Search your uploaded PDFs and documents
-- **Memory System**: Remembers user preferences across sessions
-
-### 🛠️ **Powerful Tools**
-- 🔍 **Web Search**: Real-time Google search integration
-- 📄 **Document Search**: Query your personal knowledge base
-- ✉️ **Gmail Drafts**: Create email drafts (OAuth-secured)
-- 📝 **File Export**: Save content to organized files
-- 💾 **Notes Manager**: Quick information storage and retrieval
-
-### 💬 **Smart Commands**
-Voice commands that work instantly (no API calls):
-- `"save session [name]"` - Save conversation with auto-summary
-- `"load session [name]"` - Resume previous conversations
-- `"speak slower/faster"` - Adjust speech speed
-- `"list sessions"` - View saved conversations
+**Perfect for:** Portfolio projects, AI engineering demonstrations, and understanding end-to-end voice AI systems.
 
 ---
 
-## 🚀 Quick Start
+## ✨ Key Features
 
-### **1. Prerequisites**
-```bash
-# Python 3.10 or higher
-python --version
+### 🎙️ **Dual Recording Modes**
+- **Press-to-Speak**: Fixed 5-second recording for precise control
+- **Voice Activity Detection (VAD)**: Hands-free operation with automatic speech detection using **WebRTC VAD**
 
-# Microphone and speakers
-# Internet connection (for API calls)
-```
+### 🧠 **Intelligent Conversation**
+- **LLM-Powered**: Uses OpenAI GPT-4 with function calling for natural responses
+- **Session Memory**: Persistent conversation history with SQLite storage
+- **User Profiling**: Long-term preference learning and personalization
 
-### **2. Installation**
-```bash
-# Clone repository
-git clone https://github.com/yourusername/voice-ai-assistant.git
-cd voice-ai-assistant
+### 🔧 **5 Production Tools**
+| Tool | Description | Integration |
+|------|-------------|-------------|
+| 🌐 **Web Search** | Real-time Google search | SerpAPI |
+| 📚 **RAG Query** | Document Q&A system | ChromaDB + OpenAI Embeddings |
+| ✉️ **Gmail Drafts** | Email composition (no auto-send) | Google Gmail API (OAuth2) |
+| 📝 **Notes Manager** | Quick note storage/retrieval | Local file system |
+| 💾 **File Writer** | Export conversations/summaries | Text file export |
 
-# Install dependencies
-pip install -r requirements.txt
-
-# Setup environment
-cp .env.example .env
-# Edit .env and add your API keys (see below)
-```
-
-### **3. Get API Keys**
-1. **OpenAI API Key** (Required)
-   - Sign up at [platform.openai.com](https://platform.openai.com/)
-   - Create API key → Add to `.env` as `OPENAI_API_KEY`
-
-2. **SerpAPI Key** (Optional - for web search)
-   - Sign up at [serpapi.com](https://serpapi.com/)
-   - Get free API key → Add to `.env` as `SERP_API_KEY`
-
-3. **Gmail OAuth** (Optional - for email drafts)
-   - Run: `python src/scripts/setup_google_oauth.py`
-   - Follow browser authorization flow
-
-### **4. Run**
-```bash
-# Start the assistant
-python main.py
-
-# Choose mode:
-# [1] Press-to-Speak (5 seconds)
-# [2] Voice Activity Detection (hands-free)
-```
+### 📊 **Analytics & Monitoring**
+- Real-time cost tracking (tokens, API calls)
+- Usage statistics dashboard
+- Tool execution frequency
+- Session duration & error rates
 
 ---
 
-## 🎬 Demo
+## 🎬 User Experience
 
+### **Startup**
 ```
-════════════════════════════════════════════════════════════════════
-                    🎤 VOICE AI ASSISTANT
-════════════════════════════════════════════════════════════════════
+🎤 VOICE AI ASSISTANT v1.0
 
-🎤 Listening... [████████████████████] 3s
+📚 Saved Sessions:
+   [1] meeting notes (10 messages, 2025-11-12)
+   [2] project planning (15 messages, 2025-11-11)
 
+Options:
+  • Type 1-2 to load session
+  • Press ENTER for new session
+  • Type 'stats' for analytics
+
+Choice: _
+```
+
+### **Conversation Flow**
+```
 🧑 User: What's the weather in Cairo today?
 
-🤖 Assistant: Let me check that for you...
-   🔧 [web_search: weather Cairo Egypt today]
+🤖 Thinking...
+   🔧 [web_search]...
 
-🤖 Assistant: The weather in Cairo is currently sunny with a 
-   temperature of 28°C. Expect clear skies throughout the day.
+🤖 Assistant: The weather in Cairo is sunny with 28°C...
+🔊 Speaking...
 
-🔊 Speaking... ✅
-
-════════════════════════════════════════════════════════════════════
+⏺️  Ready to listen...
 ```
+
+### **Voice Commands**
+- `"save session"` → Save with custom name
+- `"load session"` → Resume previous conversation
+- `"draft email to john@example.com"` → Create Gmail draft
+- `"search my documents for budget"` → Query RAG database
+- `"speak slower"` → Adjust TTS speed
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Voice Assistant                          │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  🎤 Audio Input  →  🧠 Whisper STT  →  🤖 GPT-4 + Tools   │
-│                                              ↓              │
-│  🔊 Audio Output ←  🗣️ Piper TTS   ←  📝 Response         │
-│                                                             │
-├─────────────────────────────────────────────────────────────┤
-│  Memory: Session (SQLite) + Vector DB (ChromaDB)           │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│                   Voice Assistant                    │
+├─────────────────────────────────────────────────────┤
+│  Audio Input → STT → LLM + Tools → TTS → Audio Out │
+└─────────────────────────────────────────────────────┘
+
+Pipeline:
+1. Record Audio (Press-to-Speak or VAD)
+2. Transcribe (Faster Whisper)
+3. Route Commands / Call LLM (GPT-4 + Function Calling)
+4. Execute Tools (Web/RAG/Gmail/Notes/Files)
+5. Synthesize Speech (Piper TTS)
+6. Play Audio (Speakers)
+7. Log Analytics
 ```
 
-**Key Components:**
-- **STT**: Faster-Whisper (local, privacy-focused)
-- **LLM**: OpenAI GPT-4 with function calling
-- **TTS**: Piper (high-quality, open-source)
-- **Vector DB**: ChromaDB for document embeddings
-- **Tools**: 5 production-ready integrations
+### **Tech Stack**
+
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| **STT** | Faster Whisper (`base` model) | High-accuracy speech recognition (16kHz) |
+| **LLM** | OpenAI GPT-4 Turbo | Natural language understanding + tool orchestration |
+| **TTS** | Piper TTS (ONNX) | Natural speech synthesis (22kHz) |
+| **VAD** | WebRTC VAD (Level 3) | Real-time silence detection |
+| **Vector DB** | ChromaDB | Document embeddings for RAG |
+| **Embeddings** | OpenAI `text-embedding-3-small` | 1536-dim semantic search |
+| **Web Search** | SerpAPI | Real-time Google search results |
+| **Email** | Google Gmail API (OAuth2) | Draft creation (no auto-send) |
+| **Memory** | SQLite + JSON | Session persistence + analytics |
+| **Tools** | LangChain-style function calling | Dynamic tool selection |
 
 ---
 
-## 📊 Project Structure
+## 🚀 Quick Start
 
-```
-voice-ai-assistant/
-├── main.py                      # Entry point
-├── src/
-│   ├── audio/                   # Recording & playback
-│   ├── stt/                     # Speech-to-text (Whisper)
-│   ├── tts/                     # Text-to-speech (Piper)
-│   ├── llm/                     # LLM client & prompts
-│   ├── memory/                  # Session & vector storage
-│   ├── tools/                   # Function calling tools
-│   ├── assistant/               # Core orchestration
-│   └── utils/                   # Config & logging
-├── data/                        # User data (gitignored)
-├── logs/                        # Application logs
-└── tests/                       # Unit tests
-```
+### **Prerequisites**
+- Python 3.10+
+- Microphone + Speakers
+- OpenAI API key
+- SerpAPI key (optional: 100 free searches/month)
 
----
-
-## 🛠️ Tech Stack
-
-| Component | Technology | Why? |
-|-----------|-----------|------|
-| **STT** | Faster-Whisper | Local processing, high accuracy |
-| **LLM** | OpenAI GPT-4 | Best-in-class reasoning + tools |
-| **TTS** | Piper | Natural voice, open-source |
-| **Vector DB** | ChromaDB | Fast semantic search |
-| **Embeddings** | OpenAI text-embedding-3 | High-quality, cost-effective |
-| **Web Search** | SerpAPI | Reliable Google search API |
-| **Audio I/O** | sounddevice | Cross-platform audio |
-| **VAD** | WebRTC VAD | Production-grade detection |
-
----
-
-## 📚 Usage Examples
-
-### **Basic Conversation**
-```
-You: "Tell me a joke"
-AI: "Why did the developer quit their job? They didn't get arrays!"
-```
-
-### **Web Search**
-```
-You: "What are the latest AI news?"
-AI: [Searches web, summarizes top 3 results]
-```
-
-### **Document Search**
+### **Installation**
 ```bash
-# First, upload documents:
-python src/scripts/ingest_documents.py --file notes.pdf
+# Clone repository
+git clone https://github.com/Zeyadelgabbas/speech-speech-ai-assistant.git
+cd speech-speech-ai-assistant
 
-# Then ask:
-You: "What did I upload about project deadlines?"
-AI: [Searches your documents, provides relevant info]
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# venv\Scripts\activate   # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure API keys
+cp .env.example .env
+# Edit .env with your keys
 ```
 
-### **Session Management**
-```
-You: "Save session as project planning"
-AI: ✅ Session saved and summary updated!
+### **Run**
+```bash
+# Test setup
+python tests/test_integration.py
 
-You: "Load session project planning"
-AI: ✅ Loaded 24 messages from March 15th
+# Launch assistant
+python main.py
 ```
 
 ---
 
-## ⚙️ Configuration
+## 📋 Configuration
 
-Key settings in `.env`:
-
+Edit `.env`:
 ```bash
 # Required
-OPENAI_API_KEY=sk-...
+OPENAI_API_KEY=sk-proj-your_key_here
+SERP_API_KEY=your_serpapi_key_here
 
-# Model Selection
-OPENAI_MODEL=gpt-4-turbo-preview  # or gpt-3.5-turbo
-WHISPER_MODEL_SIZE=base            # tiny/base/small/medium
+# Optional
+WHISPER_MODEL_SIZE=base  # tiny/small/medium/large
 PIPER_VOICE=en_US-lessac-medium
-
-# Audio Settings
-AUDIO_SAMPLE_RATE=16000
-VAD_AGGRESSIVENESS=3               # 0-3 (3 = most aggressive)
-
-# Memory
-SESSION_MEMORY_MAX_TOKENS=4000
-RAG_TOP_K=5
+VAD_AGGRESSIVENESS=3  # 0-3 (3=most sensitive)
 ```
 
 ---
 
-## 🧪 Testing
+## 🔧 Features Breakdown
 
+### **1. Retrieval-Augmented Generation (RAG)**
+- Upload PDFs/text files: `python src/scripts/ingest_documents.py --file doc.pdf`
+- Query with voice: `"What does my document say about budget?"`
+- Semantic search with ChromaDB + OpenAI embeddings
+
+### **2. Gmail Integration**
+- OAuth2 setup: `python src/scripts/setup_google_oauth.py`
+- Voice command: `"Draft email to boss about project update"`
+- Creates draft in Gmail (user reviews before sending)
+
+### **3. Session Management**
+- Auto-save conversations with custom names
+- Load previous sessions with full context
+- SQLite persistence with conversation history
+
+### **4. Smart Tool Selection**
+- Context-aware tool activation (reduces token usage)
+- Always available: Notes, File Writer
+- Conditional: Web Search, RAG, Gmail (triggered by keywords)
+
+---
+
+## 📊 Analytics Dashboard
+
+View comprehensive statistics:
 ```bash
-# Test individual components
-python src/audio/recorder.py      # Test microphone
-python src/stt/faster_whisper.py  # Test transcription
-python src/tts/piper_tts.py       # Test speech synthesis
-
-# Test tools
-python src/tools/web_search.py
-python src/tools/rag_query.py
-
-# Run full test suite
-python -m pytest tests/
+Choice: stats
 ```
+
+**Metrics tracked:**
+- Total sessions, messages, tokens (prompt + completion)
+- Estimated API costs
+- Tool execution frequency
+- Average session duration & messages per session
+- Error rates and performance metrics
+
+---
+
+## 🎯 Use Cases
+
+- **Personal Assistant**: Schedule management, note-taking, reminders
+- **Document Q&A**: Query your PDFs and documents with natural language
+- **Email Drafting**: Compose emails hands-free with Gmail integration
+- **Research Tool**: Web search integration for real-time information
+- **Learning & Development**: Portfolio project demonstrating AI engineering skills
+
+---
+
+## 🛠️ Development
+
+### **Project Structure**
+```
+speech-speech-ai-assistant/
+├── main.py                      # Entry point
+├── src/
+│   ├── assistant/              # Core orchestration
+│   ├── audio/                  # Recording, playback, VAD
+│   ├── stt/                    # Faster Whisper integration
+│   ├── tts/                    # Piper TTS
+│   ├── llm/                    # OpenAI client + prompts
+│   ├── memory/                 # Session, user, vector DB
+│   ├── tools/                  # Function calling tools
+│   └── utils/                  # Config, logging
+├── data/                       # User data (gitignored)
+└── tests/                      # Integration tests
+```
+
+### **Adding New Tools**
+1. Create tool class inheriting from `BaseTool`
+2. Implement `name`, `description`, `parameters_schema`, `execute()`
+3. Register in `VoiceAssistant._register_tools()`
 
 ---
 
 ## 🐛 Troubleshooting
 
-### **"No audio detected"**
-- Check microphone permissions
-- Test with: `python src/audio/recorder.py`
-- Try adjusting `VAD_AGGRESSIVENESS` (lower = more sensitive)
+**Microphone Issues:**
+```bash
+python -m sounddevice  # List audio devices
+```
 
-### **"OpenAI API error"**
-- Verify API key in `.env`
-- Check account has credits: [platform.openai.com/account/billing](https://platform.openai.com/account/billing)
+**API Errors:**
+- Verify API keys in `.env`
+- Check OpenAI account credits
 
-### **"Whisper model download fails"**
-- Ensure stable internet connection
-- Models download to `~/.cache/huggingface/` (2-500MB depending on size)
-
-### **"Gmail tool not working"**
-- Run OAuth setup: `python src/scripts/setup_google_oauth.py`
-- Ensure `credentials.json` in `data/google_tokens/`
+**VAD Not Detecting Speech:**
+- Adjust `VAD_AGGRESSIVENESS` (0-3)
+- Use Press-to-Speak mode instead
 
 ---
 
-## 🎓 Learning Outcomes
+## 📝 License
 
-This project demonstrates:
-- ✅ **Multi-modal AI integration** (speech, text, search)
-- ✅ **Production patterns** (error handling, logging, rate limiting)
-- ✅ **Clean architecture** (separation of concerns, dependency injection)
-- ✅ **RAG implementation** (vector databases, embeddings)
-- ✅ **Function calling** (LLM tool use, agentic behavior)
-- ✅ **State management** (session persistence, memory systems)
-
----
-
-## 📈 Future Enhancements
-
-- [ ] Web UI (FastAPI + React)
-- [ ] Streaming responses (real-time text generation)
-- [ ] Multi-language support
-- [ ] Calendar integration
-- [ ] Custom wake word detection
-- [ ] Mobile app (React Native)
+MIT License - See [LICENSE](LICENSE) file
 
 ---
 
 ## 🤝 Contributing
 
-Contributions welcome! Please:
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new features
-4. Submit a pull request
+Contributions welcome! Please open an issue or submit a pull request.
 
 ---
 
-## 📄 License
+## 👤 Author
 
-MIT License - see [LICENSE](LICENSE) file for details.
-
----
-
-## 🙏 Acknowledgments
-
-- **OpenAI** - GPT-4 and Whisper models
-- **Rhasspy** - Piper TTS engine
-- **WebRTC** - Voice Activity Detection
-- **ChromaDB** - Vector database
+**Zeyad Emad**
+- GitHub: [@Zeyadelgabbas](https://github.com/Zeyadelgabbas)
+- LinkedIn: [Zeyad Elgabas](https://www.linkedin.com/in/zeyad-elgabas-9862082b7)
+- Email: Zeyadelgabas@gmail.com
 
 ---
 
-## 📬 Contact
+## 🌟 Acknowledgments
 
-**Your Name** - [your.email@example.com](mailto:your.email@example.com)
-
-Project Link: [https://github.com/yourusername/voice-ai-assistant](https://github.com/yourusername/voice-ai-assistant)
+Built with:
+- [Faster Whisper](https://github.com/guillaumekln/faster-whisper)
+- [Piper TTS](https://github.com/rhasspy/piper)
+- [OpenAI API](https://platform.openai.com/) 
+- [ChromaDB](https://www.trychroma.com/)
+- [LangChain](https://www.langchain.com/)
 
 ---
 
-<div align="center">
-
-**⭐ Star this repo if you find it useful!**
-
-Made with ❤️ and ☕ by [Your Name]
-
-</div>
+**⭐ If you find this project useful, please star the repository!**

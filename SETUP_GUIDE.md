@@ -237,7 +237,7 @@ Choice: stats
 ### "OpenAI API error"
 - Verify API key in `.env`
 - Check account has credits: https://platform.openai.com/usage
-- Try different model (gpt-3.5-turbo cheaper)
+- Try different model 
 
 ### "Whisper model download stuck"
 - First run downloads ~140MB model

@@ -63,9 +63,9 @@ class ToolSelector:
         # Always include these tools
         selected_tool_names = set(self.always_include)
         
-        # Extract recent text (last 3 messages)
-        recent_text = self._extract_text_from_messages(recent_messages[-5:]).lower()
-                
+        # Extract recent text (last 4 messages)
+        recent_text = self._extract_text_from_messages(recent_messages[-4:]).lower()
+
         # Check each conditional tool
         for tool_name, keywords in self.keyword_map.items():
             if any(keyword in recent_text for keyword in keywords):

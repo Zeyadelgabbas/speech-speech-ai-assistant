@@ -1,6 +1,6 @@
 from typing import Optional, Dict, Any, Tuple
 import re
-from ..utils import get_logger
+from ..utils import get_logger , config
 
 logging = get_logger(__name__)
 
@@ -44,7 +44,6 @@ class CommandRouter:
             
             Format: {
                 "command": "save_session",
-                "args": {...},
                 "handler": "handle_save_session"
             }
         """
@@ -58,14 +57,10 @@ class CommandRouter:
             match = re.search(pattern, normalized)
             
             if match:
-                # Extract arguments from regex groups
-                args = self._extract_args(command_name, match)
-                
-                logging.info(f"Command matched: {command_name} with args: {args}")
+                logging.info(f"Command matched: {command_name} ")
                 
                 return {
                     "command": command_name,
-                    "args": args,
                     "handler": f"handle_{command_name}"
                 }
         
@@ -73,28 +68,6 @@ class CommandRouter:
         logging.debug("No command matched, passing to LLM")
         return None
     
-    def _extract_args(self, command_name: str, match: re.Match) -> Dict[str, Any]:
-        """
-        Extract arguments from regex match groups.
-        
-        Args:
-            command_name: Name of matched command
-            match: Regex match object
-        
-        Returns:
-            Dictionary of arguments
-        """
-        args = {}
-        
-        # Only delete_session has name in pattern
-        if command_name == "delete_session":
-            if match.groups():
-                name = match.group(1).strip()
-                args["name"] = name
-        
-        # save_session and load_session: no args (prompt via CLI)
-        
-        return args
     
     def is_exit_command(self, user_text: str) -> bool:
         """
@@ -108,10 +81,13 @@ class CommandRouter:
         
         Exit commands: "exit", "quit", "goodbye", "bye"
         """
-        normalized = user_text.lower().strip()
-        exit_keywords = ["exit", "quit", "goodbye", "bye", "stop"]
-        
-        return any(keyword == normalized for keyword in exit_keywords)
+        normalized = user_text.lower().strip() 
+        normalized = normalized.replace(".","")
+        normalized  = normalized.replace("-","")
+        normalized = normalized.replace("_","")
+        exit_keywords = ["exit", "quit", "goodbye","good bye", "bye", "stop","close"]
+        exit = any(keyword == normalized for keyword in exit_keywords)
+        return exit
 
 
 # ============================================================================
@@ -162,29 +138,36 @@ class CommandHandlers:
                     f"{msg['role']}: {msg.get('content', '')}" 
                     for msg in recent_messages if msg.get('content')
                 ])
-                
-                summary_prompt = f"""Summarize this conversation into 2-3 bullet points focusing on:
-- User preferences revealed
-- Important facts about the user
-- Topics the user is interested in
+                summary_prompt = f"""You are an intelligent assistant maintaining a short, structured summary of a user to help personalize future interactions.
 
-Conversation:
+You will receive:
+1. The current stored user summary (from previous sessions)
+2. The current conversation text
+
+Your task:
+- Read both sources carefully.
+- Extract new, meaningful information about the user (profile, preferences, interests, work, studies, research areas, goals, habits, etc.).
+- Merge it with the existing summary without duplication or contradiction.
+- Remove irrelevant or temporary details (e.g., transient topics, filler chat, jokes).
+- Keep the result short and information-dense to minimize cost.
+- Maintain a clear structured format with three sections:
+  
+Current stored summary : 
+{user_summary.load()}
+
+Current conversation text:
 {conversation_text}
 
-Summary (2-3 bullet points):"""
-                
+"""
+    
                 try:
                     summary_response = llm_client.chat([
                         {"role": "user", "content": summary_prompt}
                     ])
                     
                     session_summary = summary_response["content"]
-                    
-                    from datetime import datetime
-                    timestamp = datetime.now().strftime("%Y-%m-%d")
-                    
-                    user_summary.append(f"\n## Session: {name} ({timestamp})\n{session_summary}")
-                    
+                    user_summary.save(session_summary)
+
                     logging.info(f"Session '{name}' saved and summary updated")
                     
                 except Exception as e:
@@ -225,7 +208,8 @@ Summary (2-3 bullet points):"""
             #@@@@@@@@@@@@@@@@@
             if choice is None:
                 logging.info("Choice is None")
-                CommandHandlers.handle_list_sessions(session_manager=session_manager)
+                result,_,_ = CommandHandlers.handle_list_sessions(session_manager=session_manager)
+                print(result)
                 choice = input("Please enter the required session to load : ")
             if not choice.isdigit():
                 return ("❌ Invalid choice. Must be a number.", False, None)
@@ -342,4 +326,5 @@ Summary (2-3 bullet points):"""
     @staticmethod
     def handle_speak_normal() -> Tuple[str, bool, Optional[float]]:
         """Reset TTS speed to 1.0x."""
+        CommandHandlers.tts_speed = 1.0
         return ("Back to normal speed.", True, 1.0)

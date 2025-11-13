@@ -109,8 +109,7 @@ class UserSummary:
             
             self.summary_file.write_text(content.strip(), encoding='utf-8')
             logger.info(f"Saved user summary: {len(content)} characters")
-            print("✅ User summary updated")
-        
+           
         except Exception as e:
             logger.error(f"Error saving user summary: {e}")
             raise
@@ -158,8 +157,7 @@ class UserSummary:
         try:
             self._create_default_summary()
             logger.info("User summary cleared (reset to default)")
-            print("✅ User summary cleared")
-        
+            
         except Exception as e:
             logger.error(f"Error clearing user summary: {e}")
             raise

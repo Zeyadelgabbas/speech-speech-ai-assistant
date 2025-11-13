@@ -234,91 +234,6 @@ def main_loop(assistant: VoiceAssistant, mode: str):
         assistant.end_session()
 
 
-def handle_save_session_prompt(assistant: VoiceAssistant):
-    """
-    Prompt user to input session name and save.
-    
-    Args:
-        assistant: VoiceAssistant instance
-    """
-    print("\n" + "=" * 70)
-    print("                    SAVE SESSION")
-    print("=" * 70)
-    
-    name = input("\nEnter session name: ").strip()
-    
-    if not name:
-        print("❌ Session name cannot be empty. Save cancelled.")
-        return
-    
-    # Check if name exists
-    if assistant.session_manager.session_exists(name):
-        confirm = input(f"⚠️  Session '{name}' already exists. Overwrite? (yes/no): ").strip().lower()
-        if confirm != 'yes':
-            print("❌ Save cancelled.")
-            return
-    
-    # Save the session
-    print("\n💾 Saving session...")
-    response, _, _ = CommandHandlers.save_session_with_name(
-        assistant.session_memory,
-        assistant.session_manager,
-        assistant.user_summary,
-        assistant.llm_client,
-        name
-    )
-    
-    print(response)
-    print("\n" + "=" * 70)
-
-
-def handle_load_session_prompt(assistant: VoiceAssistant):
-    """
-    Show session list and prompt user to select.
-    
-    Args:
-        assistant: VoiceAssistant instance
-    """
-    print("\n" + "=" * 70)
-    print("                    LOAD SESSION")
-    print("=" * 70)
-    
-    sessions = assistant.list_sessions()
-    
-    if not sessions:
-        print("\n📚 No saved sessions yet.")
-        input("\nPress ENTER to continue...")
-        return
-    
-    print("\nSaved sessions:")
-    print("-" * 70)
-    for i, session in enumerate(sessions, 1):
-        print(f"   [{i}] {session['name']}")
-        print(f"       {session['message_count']} messages, {session['created_at'][:10]}")
-    print("-" * 70)
-    
-    choice = input("\nEnter session number (or 'cancel'): ").strip().lower()
-    
-    if choice == 'cancel':
-        print("❌ Load cancelled.")
-        return
-    
-    if not choice.isdigit():
-        print("❌ Invalid choice. Must be a number.")
-        return
-    
-    # Load the session
-    print("\n📂 Loading session...")
-    response, _, _ = CommandHandlers.load_session_by_choice(
-        assistant.session_memory,
-        assistant.session_manager,
-        choice
-    )
-    
-    print(response)
-    print("\n" + "=" * 70)
-
-
 def main():
     """
     Main entry point.
@@ -326,14 +241,13 @@ def main():
     Flow:
     1. Display banner
     2. Validate configuration
-    3. Initialize assistant
-    4. Show startup menu (load/new/delete/stats)
+    3. Initialize voice assistant instanace
+    4. Show startup menu (load/new/delete/stats/exit)
     5. Select mode (press/vad)
     6. Run main loop
-    7. Cleanup
     """
     try:
-        # Print banner
+
         print_banner()
         
         # Validate config

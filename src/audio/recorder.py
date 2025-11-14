@@ -48,8 +48,10 @@ class AudioRecorder:
             numpy array of audio samples (float32, range -1.0 to 1.0)
         """
         try:
+            num_samples = int(round(duration*self.sample_rate))
+
             audio_chunk = sd.rec(
-                int(duration * self.sample_rate),
+                int(round(duration * self.sample_rate)),
                 samplerate=self.sample_rate,
                 channels=self.channels,
                 dtype='float32'
@@ -57,10 +59,24 @@ class AudioRecorder:
             sd.wait()  # Wait until recording is finished
             
             # Convert to mono if stereo
-            if self.channels == 2:
-                audio_chunk = audio_chunk.mean(axis=1)
+            if audio_chunk.ndim == 2:
+
+                if self.channels ==2 and audio_chunk[1]==2:
+                    audio_chunk= audio_chunk.mean(axis=1)
+
+                elif audio_chunk[1]==1:
+                    audio_chunk=audio_chunk.flatten()
+                
+                elif audio_chunk[1] ==2 and self.channels==1:
+                    logger.warning(f"Device is stereo but mon is requested")
+                    audio_chunk = audio_chunk.mean(axis=1)
+
+            audio_chunk = audio_chunk.flatten()
+
+            if len(audio_chunk) != num_samples:
+                logger.warning(f"Sample count mismatch expected: {num_samples} got : {len(audio_chunk)}")
             
-            return audio_chunk.flatten()
+            return audio_chunk
         
         except Exception as e:
             logger.error(f"Error recording chunk: {e}")

@@ -105,17 +105,7 @@ class CommandHandlers:
     """
     # Initialize tts speed = 1.0 
     tts_speed = 1.0
-        
-    @staticmethod
-    def handle_save_session(session_memory, session_manager, user_summary, llm_client) -> Tuple[str, bool, Optional[float]]:
-        """
-        Save current session - NAME WILL BE PROMPTED VIA CLI.
-        
-        Returns:
-            ("PROMPT_NAME", False, None) - signals main.py to prompt for name
-        """
-        # Signal to main.py: prompt user for name via CLI
-        return ("PROMPT_NAME", False, None)
+
     
     @staticmethod
     def save_session_with_name(session_memory, session_manager, user_summary, llm_client, name: str) -> Tuple[str, bool, Optional[float]]:
@@ -186,16 +176,7 @@ Current conversation text:
             logging.error(f"Failed to save session: {e}")
             return (f"❌ Error saving session: {str(e)}", False, None)
     
-    @staticmethod
-    def handle_load_session(session_memory, session_manager) -> Tuple[str, bool, Optional[float]]:
-        """
-        Load session - LIST WILL BE SHOWN VIA CLI.
-        
-        Returns:
-            ("PROMPT_LOAD", False, None) - signals main.py to show session list
-        """
-        # Signal to main.py: show session list and prompt
-        return ("PROMPT_LOAD", False, None)
+
     
     @staticmethod
     def load_session_by_choice(session_memory, session_manager, choice: str) -> Tuple[str, bool, Optional[float]]:

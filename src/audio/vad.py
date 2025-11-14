@@ -22,7 +22,7 @@ class VoiceActivityDetector:
         sample_rate: int = 16000,
         aggressiveness: int = 3,
         frame_duration_ms: int = 30,
-        padding_duration_ms: int = 300,
+        padding_duration_ms: int = 750,
         speech_trigger_frames: int = 3
     ):
         """
@@ -32,7 +32,7 @@ class VoiceActivityDetector:
             sample_rate: Audio sample rate in Hz (must be 8000, 16000, 32000, or 48000)
             aggressiveness: VAD aggressiveness (0-3): 3 is most agressive 
                
-            frame_duration_ms: Duration of each audio frame in milliseconds (10, 20, or 30)
+            frame_duration_ms: Duration of each audio frame in milliseconds 
             padding_duration_ms: How long to keep recording after speech ends (ms)
             speech_trigger_frames: Number of consecutive speech frames needed to trigger
         
@@ -62,7 +62,7 @@ class VoiceActivityDetector:
         self.frame_size = int(sample_rate * frame_duration_ms / 1000)
         
         # Calculate padding frames (how many silent frames to wait before stopping)
-        self.padding_frames = int(padding_duration_ms / frame_duration_ms)
+        self.padding_frames = int(round(padding_duration_ms / frame_duration_ms))
         
         # Initialize WebRTC VAD
         self.vad = webrtcvad.Vad(aggressiveness)
@@ -233,112 +233,3 @@ class VoiceActivityDetector:
         self.ring_buffer.clear()
         logger.info("VAD state reset")
     
-
-
-
-# MODULE TEST
-if __name__ == "__main__":
-    print("=" * 70)
-    print("VOICE ACTIVITY DETECTION TEST")
-    print("=" * 70)
-    
-    # Test 1: Initialize VAD with different aggressiveness levels
-    print("\n📊 Testing different aggressiveness levels...")
-    for agg in [0, 1, 2, 3]:
-        vad = VoiceActivityDetector(sample_rate=16000, aggressiveness=agg)
-        print(f"  ✅ VAD initialized with aggressiveness={agg}")
-    
-    # Test 2: Test with synthetic audio
-    print("\n" + "=" * 70)
-    print("Testing with synthetic audio (silence vs. tone)...")
-    
-    vad = VoiceActivityDetector(sample_rate=16000, aggressiveness=2)
-    sample_rate = 16000
-    frame_duration_ms = 30
-    frame_size = int(sample_rate * frame_duration_ms / 1000)
-    
-    # Generate silence frame
-    silence_frame = np.zeros(frame_size, dtype=np.float32)
-    is_speech_silence = vad.is_speech(silence_frame)
-    print(f"  Silence frame: is_speech = {is_speech_silence} (should be False)")
-    
-    # Generate tone frame (simulates voice)
-    t = np.linspace(0, frame_duration_ms / 1000, frame_size, endpoint=False)
-    tone_frame = 0.3 * np.sin(2 * np.pi * 200 * t).astype(np.float32)  # 200Hz tone
-    is_speech_tone = vad.is_speech(tone_frame)
-    print(f"  Tone frame (200Hz): is_speech = {is_speech_tone} (should be True)")
-    
-    # Test 3: Test state machine with sequence of frames
-    print("\n" + "=" * 70)
-    print("Testing state machine (speech detection with padding)...")
-    
-    vad.reset()
-    
-    # Simulate: 5 silence frames → 10 speech frames → 15 silence frames
-    print("\n  Simulating audio sequence:")
-    print("  - 5 silence frames")
-    print("  - 10 speech frames (should trigger 'speech started')")
-    print("  - 15 silence frames (should trigger 'speech ended' after padding)")
-    
-    frames = []
-    frames.extend([np.zeros(frame_size, dtype=np.float32) for _ in range(5)])  # Silence
-    frames.extend([0.3 * np.sin(2 * np.pi * 200 * t).astype(np.float32) for _ in range(10)])  # Speech
-    frames.extend([np.zeros(frame_size, dtype=np.float32) for _ in range(15)])  # Silence
-    
-    print("\n  Processing frames:")
-    for i, frame in enumerate(frames):
-        started, ended = vad.process_frame(frame)
-        
-        if started:
-            print(f"    Frame {i:2d}: 🎙️  SPEECH STARTED")
-        if ended:
-            print(f"    Frame {i:2d}: 🔇 SPEECH ENDED")
-        
-        # Show state every 5 frames
-        if i % 5 == 0:
-            status = "SPEAKING" if vad.is_speech_active else "SILENT"
-            print(f"    Frame {i:2d}: Status = {status}")
-    
-    # Test 4: Energy-based detection
-    print("\n" + "=" * 70)
-    print("Testing energy-based detection...")
-    
-    
-    
-    # Test 5: Real microphone test (optional, requires user input)
-    print("\n" + "=" * 70)
-    print("🎤 Real-time microphone test (optional)")
-    user_input = input("Test with your microphone? (y/n): ").strip().lower()
-    
-    if user_input == 'y':
-        import sounddevice as sd
-        import time
-        
-        print("\n  Recording 5 seconds... Speak to test VAD!")
-        print("  Try: speak → pause → speak → pause")
-        
-        vad.reset()
-        duration = 5.0
-        audio = sd.rec(
-            int(duration * sample_rate),
-            samplerate=sample_rate,
-            channels=1,
-            dtype='float32'
-        )
-        sd.wait()
-        audio = audio.flatten()
-        
-        print("\n  Processing recorded audio...")
-        started, ended, speech_count = vad.process_audio_buffer(audio)
-        
-        total_frames = len(audio) // frame_size
-        speech_percentage = (speech_count / total_frames) * 100
-        
-        print(f"\n  Results:")
-        print(f"    Total frames: {total_frames}")
-        print(f"    Speech frames: {speech_count} ({speech_percentage:.1f}%)")
-        print(f"    Speech started: {started}")
-        print(f"    Speech ended: {ended}")
-    
-    print("\n" + "=" * 70)
-    print("✅ All VAD tests passed!")

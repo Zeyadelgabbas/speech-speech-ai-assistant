@@ -10,7 +10,7 @@ LOG_FILE_PATH = os.path.join(LOGS_DIR, LOG_FILE)
 
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="[%(asctime)s] %(lineno)d %(name)s %(levelname)s %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     filename=LOG_FILE_PATH

@@ -1,7 +1,3 @@
-"""
-Usage analytics tracker for voice assistant.
-Logs session metrics and generates reports.
-"""
 import json
 from pathlib import Path
 from datetime import datetime
@@ -39,6 +35,8 @@ class Analytics:
         self.session_data = {
             "messages_count": 0,
             "tools_used": [],
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
             "total_tokens": 0,
             "errors": 0,
             "estimated_cost": 0.0
@@ -52,6 +50,8 @@ class Analytics:
         self.session_data = {
             "messages_count": 0,
             "tools_used": [],
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
             "total_tokens": 0,
             "errors": 0,
             "estimated_cost": 0.0
@@ -68,6 +68,8 @@ class Analytics:
     
     def log_tokens(self, prompt_tokens: int, completion_tokens: int):
         """Log token usage."""
+        self.session_data["prompt_tokens"] += prompt_tokens
+        self.session_data["completion_tokens"] += completion_tokens
         self.session_data["total_tokens"] += (prompt_tokens + completion_tokens)
         
         # Estimate cost (update pricing as needed)
@@ -132,6 +134,8 @@ class Analytics:
             # Calculate statistics
             total_sessions = len(records)
             total_messages = sum(r.get("messages_count", 0) for r in records)
+            total_prompt_tokens = sum(r.get("prompt_tokens", 0) for r in records)
+            total_completion_tokens = sum(r.get("completion_tokens", 0) for r in records)
             total_tokens = sum(r.get("total_tokens", 0) for r in records)
             total_cost = sum(r.get("estimated_cost", 0.0) for r in records)
             total_errors = sum(r.get("errors", 0) for r in records)
@@ -148,6 +152,7 @@ class Analytics:
             # Average metrics
             avg_session_length = total_duration / total_sessions if total_sessions > 0 else 0
             avg_messages = total_messages / total_sessions if total_sessions > 0 else 0
+            avg_tokens_per_session = total_tokens / total_sessions if total_sessions > 0 else 0
             error_rate = (total_errors / total_messages * 100) if total_messages > 0 else 0
             
             # Build report
@@ -158,10 +163,11 @@ class Analytics:
             report += f"║  Total Messages:       {total_messages:<35}║\n"
             report += f"║  Total Duration:       {self._format_duration(total_duration):<35}║\n"
             report += "╠══════════════════════════════════════════════════════════════╣\n"
-            report += "║  💰 API Usage:                                               ║\n"
-            report += f"║    • OpenAI Tokens:    {total_tokens:<35}║\n"
-            report += f"║    • Estimated Cost:   ${total_cost:.2f}{' ' * (33 - len(f'${total_cost:.2f}'))}║\n"
-            report += f"║    • Tool Calls:       {len(all_tools):<35}║\n"
+            report += "║  💰 Token Usage & Costs:                                     ║\n"
+            report += f"║    • Prompt Tokens:    {total_prompt_tokens:<35}║\n"
+            report += f"║    • Completion Tokens:{total_completion_tokens:<35}║\n"
+            report += f"║    • Total Tokens:     {total_tokens:<35}║\n"
+            report += f"║    • Estimated Cost:   ${total_cost:.4f}{' ' * (31 - len(f'${total_cost:.4f}'))}║\n"
             report += "╠══════════════════════════════════════════════════════════════╣\n"
             
             if most_used:
@@ -172,10 +178,12 @@ class Analytics:
                     report += f"{line}{' ' * spaces}({count} times){' ' * (62 - len(line) - spaces - len(f'({count} times)'))}║\n"
                 report += "╠══════════════════════════════════════════════════════════════╣\n"
             
-            report += "║  ⚡ Performance:                                              ║\n"
-            report += f"║    • Avg Session:      {avg_session_length:.1f}s{' ' * (34 - len(f'{avg_session_length:.1f}s'))}║\n"
-            report += f"║    • Avg Messages:     {avg_messages:.1f}{' ' * (35 - len(f'{avg_messages:.1f}'))}║\n"
+            report += "║  ⚡ Performance Metrics:                                      ║\n"
+            report += f"║    • Avg Session:      {self._format_duration(avg_session_length):<35}║\n"
+            report += f"║    • Avg Messages:     {avg_messages:.1f} msgs/session{' ' * (23 - len(f'{avg_messages:.1f}'))}║\n"
+            report += f"║    • Avg Tokens:       {avg_tokens_per_session:.0f} tokens/session{' ' * (20 - len(f'{avg_tokens_per_session:.0f}'))}║\n"
             report += f"║    • Error Rate:       {error_rate:.1f}%{' ' * (34 - len(f'{error_rate:.1f}%'))}║\n"
+            report += f"║    • Tool Calls:       {len(all_tools)} total{' ' * (29 - len(f'{len(all_tools)}'))}║\n"
             report += "╚══════════════════════════════════════════════════════════════╝\n"
             
             return report
@@ -211,6 +219,8 @@ class Analytics:
                         records.append(json.loads(line))
             
             total_cost = sum(r.get("estimated_cost", 0.0) for r in records)
+            total_prompt_tokens = sum(r.get("prompt_tokens", 0) for r in records)
+            total_completion_tokens = sum(r.get("completion_tokens", 0) for r in records)
             total_tokens = sum(r.get("total_tokens", 0) for r in records)
             
             # Last 7 days cost
@@ -226,6 +236,8 @@ class Analytics:
             
             return {
                 "total_cost": total_cost,
+                "total_prompt_tokens": total_prompt_tokens,
+                "total_completion_tokens": total_completion_tokens,
                 "total_tokens": total_tokens,
                 "last_7_days_cost": recent_cost,
                 "sessions_count": len(records)
@@ -235,6 +247,8 @@ class Analytics:
             logger.error(f"Failed to get cost summary: {e}")
             return {
                 "total_cost": 0.0,
+                "total_prompt_tokens": 0,
+                "total_completion_tokens": 0,
                 "total_tokens": 0,
                 "last_7_days_cost": 0.0,
                 "sessions_count": 0

@@ -212,19 +212,6 @@ def main_loop(assistant: VoiceAssistant, mode: str):
             # Check if we should continue
             if not continue_conversation:
                 break
-            
-            # Check for special command responses (PROMPT_NAME, PROMPT_LOAD)
-            last_response = assistant.session_memory.get_last_n_messages(1)
-            if last_response and last_response[0].get("role") == "assistant":
-                content = last_response[0].get("content", "")
-                
-                if content == "PROMPT_NAME":
-                    # User said "save session" - prompt for name
-                    handle_save_session_prompt(assistant)
-                
-                elif content == "PROMPT_LOAD":
-                    # User said "load session" - show menu
-                    handle_load_session_prompt(assistant)
     
     except KeyboardInterrupt:
         print("\n\n⚠️  Interrupted by user")

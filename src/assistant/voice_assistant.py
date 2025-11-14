@@ -299,9 +299,20 @@ class VoiceAssistant:
                                 print(f"🎤 Recording... [{bar}] {duration:.1f}s", end='\r')
                         
                         if ended:
+
                             speech_ended = True
-                            print("\n✅ Speech ended (silence detected)")
-                            break
+                            arr = np.array(recorded_chunks)
+                            if np.mean(arr**2) < 0.01:
+                                self.vad.reset()
+                                speech_started = False
+                                speech_ended = False
+                                recorded_chunks=[]
+                                chunks_recorded=0
+                                audio_queue = queue.Queue()
+                                continue
+                            else:
+                                print("\n✅ Speech ended (silence detected)")
+                                break
                     
                     except queue.Empty:
                         # No audio data yet, continue
@@ -317,10 +328,12 @@ class VoiceAssistant:
                 
                 # Concatenate all chunks
                 if recorded_chunks:
-                    audio = np.concatenate(recorded_chunks)
+                    audio = np.concatenate(arr)
                     
                     if len(audio) < self.recorder.sample_rate * 0.3:
                         print("\n⚠️  Recording too short")
+                        return None
+                    elif audio.max() < 0.08:
                         return None
                     
                     print(f"✅ Recorded {len(audio) / self.recorder.sample_rate:.1f}s")
@@ -337,216 +350,6 @@ class VoiceAssistant:
             print(f"\n❌ Recording error: {str(e)}")
             return None
 
-
-    def _record_with_vad_(self,indata,frames,time,status):
-        self.vad.reset()
-        self.recorder.start_recording()
-        
-        
-
-        speech_started = False
-        chunks_recorded = 0
-        
-        frame_duration = 0.1
-        max_duration = 30.0
-        timeout_duration = 5.0
-
-        max_chunks = int(max_duration/frame_duration)
-        timeout_chunks = int(timeout_duration/frame_duration)
-
-        silent_chunks = 0
-        total_chunks_processed = 0
-        
-        try:
-            while total_chunks_processed < max_chunks:
-                # Record 0.5s chunk
-                chunk = self.recorder.record_chunk(duration=frame_duration)
-                total_chunks_processed+=1
-
-                if total_chunks_processed==1:
-                    logger.debug(f"First chunk : shape = {chunk.shape} , size = {len(chunk)}")
-                    logger.debug(f"first chunk : {chunk}")
-
-
-                if len(chunk) != self.vad.frame_size:
-                    logger.warning(f"Chunk size mismatch got : {len(chunk)} , expected : {self.vad.frame_size}")
-
-                    if len(chunk) > self.vad.frame_size:
-                        chunk = chunk[:self.vad.frame_size]
-                    
-                    else:
-                        chunk = np.pad(chunk,(0,self.vad.frame_size-len(chunk)))
-                
-                # Process with VAD
-                started, ended = self.vad.process_frame(chunk)
-                
-                if started:
-                    speech_started = True
-                    silent_chunks = 0
-                    print("🎤 [Recording...]", end='\r')
-                
-                if speech_started:
-                    self.recorder.add_chunk(chunk)
-                    chunks_recorded += 1
-                    
-                    # Show progress
-                    if chunks_recorded % 16 == 0 :
-                            
-                        duration = chunks_recorded * frame_duration
-                        bar = '█' * int(duration / 1.5) + '░' * (20 - int(duration / 1.5))
-                        print(f"🎤 Recording... [{bar}] {duration:.1f}s / 30s", end='\r')
-                
-                if ended:
-                    print("\n✅ Speech ended (silence detected)")
-                    break
-                
-                # Timeout if no speech detected
-                if not speech_started:
-                    silent_chunks += 1
-                    if silent_chunks % 33 ==0:
-                        elapsed = silent_chunks*frame_duration
-                        max_amp = np.abs(chunk).max()
-                        print(f"Chunk samples: {len(chunk)}, max_amp={np.abs(chunk).max():.6f}")
-                        print(f"⏳ Waiting for speech... {elapsed:.1f}s (max_amp={max_amp:.6f})")
-
-                    if silent_chunks >= timeout_chunks:
-                        print("\n⚠️  No speech detected (timeout)")
-                        return None
-            
-            # Get complete audio
-            audio = self.recorder.stop_recording()
-            
-            if len(audio) < self.recorder.sample_rate * 0.3:
-                print("\n⚠️  Recording too short")
-                return None
-            
-            print(f"\n✅ Recorded {len(audio) / self.recorder.sample_rate:.1f}s")
-            return audio
-        
-        except KeyboardInterrupt:
-            print("\n⚠️  Recording interrupted")
-            self.recorder.stop_recording()
-            return None
-    
-        except Exception as e:
-            logger.error(f"Error in _record_with_vad: {e}")
-            self.recorder.stop_recording()
-            raise
-    def _record_with_vad(self) -> Optional[np.ndarray]:
-        """
-        Record audio using Voice Activity Detection.
-        
-        Returns:
-            Audio numpy array or None
-        
-        Algorithm:
-        1. Reset VAD state
-        2. Start recording when speech detected
-        3. Keep recording while speech continues
-        4. Stop when silence detected (300ms padding)
-        5. Max recording: 30 seconds
-        6. Timeout: 10 seconds of no speech
-        """
-        print("\n⏺️  Listening... (say something or 'stop listening')")
-        
-        self.vad.reset()
-        self.recorder.start_recording()
-        
-        
-
-        speech_started = False
-        chunks_recorded = 0
-        
-        frame_duration = 0.1
-        max_duration = 30.0
-        timeout_duration = 5.0
-
-        max_chunks = int(max_duration/frame_duration)
-        timeout_chunks = int(timeout_duration/frame_duration)
-
-        silent_chunks = 0
-        total_chunks_processed = 0
-
-
-        #max_chunks = 60  # 30 seconds (0.5s chunks)
-        #timeout_chunks = 20  # 10 seconds timeout
-        #silent_chunks = 0
-        
-        try:
-            while total_chunks_processed < max_chunks:
-                # Record 0.5s chunk
-                chunk = self.recorder.record_chunk(duration=frame_duration)
-                total_chunks_processed+=1
-
-                if total_chunks_processed==1:
-                    logger.debug(f"First chunk : shape = {chunk.shape} , size = {len(chunk)}")
-                    logger.debug(f"first chunk : {chunk}")
-
-
-                if len(chunk) != self.vad.frame_size:
-                    logger.warning(f"Chunk size mismatch got : {len(chunk)} , expected : {self.vad.frame_size}")
-
-                    if len(chunk) > self.vad.frame_size:
-                        chunk = chunk[:self.vad.frame_size]
-                    
-                    else:
-                        chunk = np.pad(chunk,(0,self.vad.frame_size-len(chunk)))
-                
-                # Process with VAD
-                started, ended = self.vad.process_frame(chunk)
-                
-                if started:
-                    speech_started = True
-                    silent_chunks = 0
-                    print("🎤 [Recording...]", end='\r')
-                
-                if speech_started:
-                    self.recorder.add_chunk(chunk)
-                    chunks_recorded += 1
-                    
-                    # Show progress
-                    if chunks_recorded % 16 == 0 :
-                            
-                        duration = chunks_recorded * frame_duration
-                        bar = '█' * int(duration / 1.5) + '░' * (20 - int(duration / 1.5))
-                        print(f"🎤 Recording... [{bar}] {duration:.1f}s / 30s", end='\r')
-                
-                if ended:
-                    print("\n✅ Speech ended (silence detected)")
-                    break
-                
-                # Timeout if no speech detected
-                if not speech_started:
-                    silent_chunks += 1
-                    if silent_chunks % 33 ==0:
-                        elapsed = silent_chunks*frame_duration
-                        max_amp = np.abs(chunk).max()
-                        print(f"Chunk samples: {len(chunk)}, max_amp={np.abs(chunk).max():.6f}")
-                        print(f"⏳ Waiting for speech... {elapsed:.1f}s (max_amp={max_amp:.6f})")
-
-                    if silent_chunks >= timeout_chunks:
-                        print("\n⚠️  No speech detected (timeout)")
-                        return None
-            
-            # Get complete audio
-            audio = self.recorder.stop_recording()
-            
-            if len(audio) < self.recorder.sample_rate * 0.3:
-                print("\n⚠️  Recording too short")
-                return None
-            
-            print(f"\n✅ Recorded {len(audio) / self.recorder.sample_rate:.1f}s")
-            return audio
-        
-        except KeyboardInterrupt:
-            print("\n⚠️  Recording interrupted")
-            self.recorder.stop_recording()
-            return None
-    
-        except Exception as e:
-            logger.error(f"Error in _record_with_vad: {e}")
-            self.recorder.stop_recording()
-            raise
 
     def _handle_command(self, command: Dict[str, Any]) -> tuple:
         """
@@ -722,6 +525,9 @@ class VoiceAssistant:
             
             # Play (blocking)
             self.player.play(audio, blocking=True)
+
+        except KeyboardInterrupt :
+            print()
         
         except Exception as e:
             logger.error(f"TTS/playback error: {e}")

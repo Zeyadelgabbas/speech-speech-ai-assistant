@@ -57,6 +57,15 @@ class AudioPlayer:
             self.is_playing = True
             sd.play(audio, samplerate=self.sample_rate)
             
+            try:
+                import time
+                while sd.get_stream().active:
+                    
+                    time.sleep(0.05)
+            except KeyboardInterrupt:
+                sd.stop()
+                self.is_playing = False
+                return
             if blocking:
                 sd.wait()  # Wait until playback finishes
                 self.is_playing = False
@@ -64,6 +73,8 @@ class AudioPlayer:
             else:
                 logger.info("Non-blocking playback started")
         
+        except KeyboardInterrupt:
+            print()
         except Exception as e:
             self.is_playing = False
             logger.error(f"Error during playback: {e}")
@@ -138,40 +149,3 @@ class AudioPlayer:
         return devices
 
 
-# MODULE TEST
-if __name__ == "__main__":
-
-    # List available devices
-    print("\nAvailable audio devices:")
-    devices = AudioPlayer.get_available_devices()
-    for i, device in enumerate(devices):
-        if device['max_output_channels'] > 0:
-            print(f"  [{i}] {device['name']} (outputs: {device['max_output_channels']})")
-    
-    # Test speakers with sine wave
-    print("\n" + "=" * 70)
-    AudioPlayer.test_speakers(duration=1.0, frequency=440.0)
-    
-    # Test playing random audio
-    print("\n" + "=" * 70)
-    print("Testing playback with random audio (2s)...")
-    sample_rate = 16000
-    duration = 2.0
-    
-    # Generate some test audio (gentle noise)
-    audio = np.random.normal(0, 0.1, int(sample_rate * duration)).astype(np.float32)
-    
-    player = AudioPlayer(sample_rate=sample_rate)
-    player.play(audio, blocking=True)
-    print(f"✅ Played {len(audio)} samples ({duration}s)")
-    
-    # Test non-blocking playback
-    print("\n" + "=" * 70)
-    print("Testing non-blocking playback...")
-    audio2 = 0.2 * np.sin(2 * np.pi * 523.25 * np.linspace(0, 1, sample_rate))  # C5 note
-    player.play(audio2.astype(np.float32), blocking=False)
-    import time
-    time.sleep(1)  # Wait  to let it finish
-    
-    print("\n" + "=" * 70)
-    print("✅ All player tests passed!")

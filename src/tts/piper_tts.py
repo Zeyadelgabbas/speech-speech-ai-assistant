@@ -100,6 +100,8 @@ class PiperTTS:
         """Synthesize text to numpy audio array."""
         if not text.strip():
             return np.array([], dtype=np.float32)
+        
+        text = text.replace("*","")
 
         logger.info(f"Synthesizing: '{text[:50]}...'")
 
@@ -109,6 +111,8 @@ class PiperTTS:
             audio = np.concatenate([chunk.audio_float_array for chunk in audio_chunks]).astype(np.float32)
 
             return audio
+        except KeyboardInterrupt:
+            print()
         except Exception as e:
             logger.error(f"TTS synthesis error: {e}")
             raise

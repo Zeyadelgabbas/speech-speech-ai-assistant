@@ -146,7 +146,7 @@ class OpenAIClient:
                 f"tokens={usage.total_tokens} (prompt={usage.prompt_tokens}, "
                 f"completion={usage.completion_tokens})"
             )  
-            return result
+            return result , {'prompt_tokens':usage.prompt_tokens,'completion_tokens':usage.completion_tokens}
         
         except Exception as e:
             logger.error(f"OpenAI API error: {e}")
@@ -189,11 +189,11 @@ class OpenAIClient:
             logger.info(f"Tool call loop iteration {iteration}/{max_iterations}")
             
             # Get LLM response
-            response = self.chat(messages, tools=tools)
+            response , tokens = self.chat(messages, tools=tools)
             
             # If no tool calls, we're done
             if not response["tool_calls"]:
-                return response
+                return response , tokens
             
             # Add assistant message with tool calls to history
             messages.append({
@@ -240,7 +240,7 @@ class OpenAIClient:
             "content": "I apologize, but I'm having trouble completing your request. Please try again.",
             "tool_calls": None,
             "finish_reason": "max_iterations"
-        }
+        },{}
     
     def count_tokens(self, text: str) -> int:
         """

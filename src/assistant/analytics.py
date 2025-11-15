@@ -3,7 +3,7 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, List
 from collections import Counter
-from ..utils import get_logger, config
+from ..utils import get_logger, config ,estimate_cost
 
 logger = get_logger(__name__)
 
@@ -66,17 +66,23 @@ class Analytics:
         """Log a tool execution."""
         self.session_data["tools_used"].append(tool_name)
     
-    def log_tokens(self, prompt_tokens: int, completion_tokens: int):
+    def log_tokens(self, tokens):
         """Log token usage."""
+
+        pricing = estimate_cost(tokens)
+        prompt_tokens = pricing.get("prompt_tokens",0)
+        completion_tokens = pricing.get("completion_tokens",0)
+
+
         self.session_data["prompt_tokens"] += prompt_tokens
         self.session_data["completion_tokens"] += completion_tokens
         self.session_data["total_tokens"] += (prompt_tokens + completion_tokens)
         
         # Estimate cost (update pricing as needed)
         # gpt-4-turbo: $10/1M input, $30/1M output
-        cost = (prompt_tokens / 1_000_000) * 10.0
-        cost += (completion_tokens / 1_000_000) * 30.0
-        self.session_data["estimated_cost"] += cost
+        estimated_total_cost = pricing['total_cost_usd']
+        self.session_data["estimated_cost"] +=estimated_total_cost
+        logger.info("Logged tokens to stats")
     
     def log_error(self):
         """Increment error count."""
@@ -254,71 +260,13 @@ class Analytics:
                 "sessions_count": 0
             }
 
+    def reset_stats(self):
+        try:
+            with open(self.log_file, "w") as f:
+                pass
+            logger.info("Stats are cleared")
 
-# ============================================================================
-# MODULE TEST
-# ============================================================================
-if __name__ == "__main__":
-    import tempfile
-    import time
-    
-    print("=" * 70)
-    print("ANALYTICS TEST")
-    print("=" * 70)
-    
-    # Create temp file
-    temp_file = Path(tempfile.mktemp(suffix=".jsonl"))
-    
-    try:
-        # Test 1: Initialize
-        print("\n📝 Test 1: Initialize analytics")
-        analytics = Analytics(log_file=temp_file)
-        print("✅ Initialized")
-        
-        # Test 2: Track a session
-        print("\n📝 Test 2: Track session")
-        analytics.start_session()
-        
-        # Simulate activity
-        for i in range(5):
-            analytics.log_message()
-            analytics.log_tool_use("web_search")
-            analytics.log_tokens(100, 50)
-        
-        analytics.log_tool_use("rag_query")
-        analytics.log_error()
-        
-        time.sleep(0.5)  # Simulate duration
-        analytics.end_session()
-        
-        print("✅ Session logged")
-        
-        # Test 3: Generate report
-        print("\n📝 Test 3: Generate report")
-        
-        # Log another session
-        analytics.start_session()
-        analytics.log_message()
-        analytics.log_message()
-        analytics.log_tool_use("gmail_draft")
-        analytics.log_tokens(200, 100)
-        time.sleep(0.3)
-        analytics.end_session()
-        
-        report = analytics.generate_report()
-        print(report)
-        
-        # Test 4: Cost summary
-        print("\n📝 Test 4: Cost summary")
-        cost = analytics.get_cost_summary()
-        print(f"Total cost: ${cost['total_cost']:.4f}")
-        print(f"Total tokens: {cost['total_tokens']}")
-        print(f"Sessions: {cost['sessions_count']}")
-        
-        print("\n✅ All analytics tests passed!")
-    
-    finally:
-        # Cleanup
-        if temp_file.exists():
-            temp_file.unlink()
-            print(f"\n🧹 Cleaned up: {temp_file}")
+        except Exception as e:
+            error_msg = f"Error clearing stats : {str(e)}"
+            logger.error(error_msg)
+            print(error_msg)

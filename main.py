@@ -147,7 +147,16 @@ def show_stats(assistant: VoiceAssistant):
     print("\n")
     report = assistant.analytics.generate_report()
     print(report)
-    input("\nPress ENTER to continue...")
+    print("\n[1] type reset to reset all stats")
+    input_ = input("\nPress ENTER to continue...   ")
+    if input_ and input_ =='reset':
+        check = input("Are you sure you want to reset all stats (y/n) :   ")
+        if check.lower().strip() =='yes' or check.lower().strip() == 'y':
+            assistant.analytics.reset_stats()
+            print("\n✅ Stats are reset ")
+        else:
+            input("\nPress ENTER to continue...   ")
+
 
 
 def mode_selection_menu() -> str:

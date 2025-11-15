@@ -301,8 +301,10 @@ class VoiceAssistant:
                         if ended:
 
                             speech_ended = True
-                            arr = np.array(recorded_chunks)
-                            if np.mean(arr**2) < 0.01:
+                            # check power and remove padding from power calculation. padding frames = 750/30 = 25
+                            arr = np.array(recorded_chunks[:-25])
+                            arr = arr.flatten()
+                            if np.mean(arr**2) < 0.001:
                                 self.vad.reset()
                                 speech_started = False
                                 speech_ended = False
@@ -328,7 +330,7 @@ class VoiceAssistant:
                 
                 # Concatenate all chunks
                 if recorded_chunks:
-                    audio = np.concatenate(arr)
+                    audio = np.concatenate(recorded_chunks)
                     
                     if len(audio) < self.recorder.sample_rate * 0.3:
                         print("\n⚠️  Recording too short")
@@ -440,12 +442,13 @@ class VoiceAssistant:
             # Call LLM with function calling
             print("🤖 Thinking...")
             
-            response = self.llm_client.execute_tool_call_loop(
+            response ,tokens = self.llm_client.execute_tool_call_loop(
                 messages=messages,
                 tools=tool_schemas,
                 tool_executor=self._execute_tool,
                 max_iterations=5
             )
+            self.analytics.log_tokens(tokens)
             
             # Extract response text
             assistant_text = response.get("content", "")

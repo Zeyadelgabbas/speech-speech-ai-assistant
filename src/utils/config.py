@@ -1,4 +1,5 @@
 import os
+import json
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -31,6 +32,7 @@ class Config:
     OPENAI_EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
     TEMPERATURE = float(os.getenv("TEMPERATURE",0.7))
     MAX_TOKENS = int(os.getenv("MAX_TOKENS",5000))
+    MODEL_PRICES = json.loads(os.getenv("MODEL_PRICES",{}))
 
     # AUDIO SETTINGS
     AUDIO_SAMPLE_RATE = int(os.getenv("AUDIO_SAMPLE_RATE", "16000"))
